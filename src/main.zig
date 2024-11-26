@@ -18,36 +18,85 @@ fn update(file: *fs.File, allocator: std.mem.Allocator) !void {
     defer url.deinit();
     defer fileName.deinit();
 
-    var downloaded = ArrayList([]const u8).init(allocator);
+    var downloaded = ArrayList(String).init(allocator);
     defer downloaded.deinit();
+    var inFile = ArrayList(String).init(allocator);
+    defer inFile.deinit();
 
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
 
     var walker = try musicFolder.walk(allocator);
     defer walker.deinit();
-    while (try walker.next()) |f| {
-        try downloaded.append(f.basename[0 .. f.basename.len - 4]);
-    }
+    while (try walker.next()) |line| {
+        var baseNameSlice: String = try String.initCapacity(allocator, line.basename.len - 3);
+        try baseNameSlice.appendSlice(line.basename[0 .. line.basename.len - 4]);
 
-    for (0..downloaded.items.len) |i| {
-        print("{s}\n", .{downloaded.items[i]});
+        try downloaded.append(baseNameSlice);
     }
 
     var buffReader = std.io.bufferedReader(file.reader());
     var inStream = buffReader.reader();
     var buf: [1024]u8 = undefined;
     while (try inStream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
-        const name = getName(line);
-        const URL = getURL(line);
+        var name: String = String.init(allocator);
+        try name.appendSlice(getName(line));
 
+        var temp: String = String.init(allocator);
+        try temp.appendSlice(name.items);
+        try inFile.append(temp);
+
+        print("\n", .{});
         // Check if is downloaded
-        if (try isDownloaded(name, allocator)) {
-            print("{s} is already downloaded!\n", .{name});
-        } else try downloadYT(URL, name);
-
-        // Delete if the file not in the music.md file
+        // const URL = getURL(line);
+        // if (try isDownloaded(name, allocator)) {
+        //     print("{s} is already downloaded!\n", .{name});
+        // } else try downloadYT(URL, name);
     }
+
+    // Delete if the file not in the music.md file
+    for (0..downloaded.items.len) |i| {
+        // print("{s}\n", .{downloaded.items[i].items});
+
+        if (isToDelete(&downloaded.items[i], &inFile)) {
+            print("Do you want to delete: {s}?\n", .{downloaded.items[i].items});
+            var buff: [10]u8 = undefined;
+
+            const stdin = std.io.getStdIn().reader();
+
+            const input = try stdin.readUntilDelimiter(buff[0..], '\n');
+            if (std.mem.eql(u8, input, "y")) {
+                var temp: String = String.init(allocator);
+                defer temp.deinit();
+
+                try temp.appendSlice("/home/tal/Music/");
+                try temp.appendSlice(downloaded.items[i].items);
+                try temp.appendSlice(".mp3");
+
+                try fs.deleteFileAbsolute(temp.items);
+                print("Succcessfully deleted '{s}'.mp3!\n", .{temp.items});
+            }
+        }
+    }
+
+    for (0..downloaded.items.len) |i| {
+        downloaded.items[i].deinit();
+    }
+
+    for (0..inFile.items.len) |i| {
+        inFile.items[i].deinit();
+    }
+}
+
+fn isToDelete(fileName: *String, lines: *ArrayList(String)) bool {
+    var a: usize = 0;
+    for (0..lines.items.len) |i| {
+        a = i;
+        if (std.mem.eql(u8, lines.items[i].items, fileName.items)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 fn isDownloaded(name: []const u8, allocator: std.mem.Allocator) !bool {
@@ -57,7 +106,7 @@ fn isDownloaded(name: []const u8, allocator: std.mem.Allocator) !bool {
     var walker = try musicFolder.walk(allocator);
     defer walker.deinit();
     while (try walker.next()) |file| {
-        if (std.mem.eql(u8, name, file.basename[0 .. file.basename.len - 4]))
+        if (std.mem.eql(u8, name.items, file.basename[0 .. file.basename.len - 4]))
             return true;
     }
     return false;
