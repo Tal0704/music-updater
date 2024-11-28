@@ -16,10 +16,13 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
     defer downloaded.deinit();
     var inFile = ArrayList(String).init(allocator);
     defer inFile.deinit();
+    var deleteQueue = ArrayList(String).init(allocator);
+    defer deleteQueue.deinit();
 
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
 
+    // Read in all files
     var walker = try musicFolder.walk(allocator);
     defer walker.deinit();
     while (try walker.next()) |line| {
@@ -29,6 +32,7 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
         try downloaded.append(baseNameSlice);
     }
 
+    // Read in all lines + download;
     var buffReader = std.io.bufferedReader(file.reader());
     var inStream = buffReader.reader();
     var buf: [1024]u8 = undefined;
@@ -40,7 +44,6 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
         try temp.appendSlice(name.items);
         try inFile.append(temp);
 
-        print("\n", .{});
         // Check if is downloaded
         const URL = getURL(line);
         if (try isDownloaded(name.items, allocator)) {
@@ -48,37 +51,26 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
         } else try downloadYT(URL, name.items, dir);
     }
 
-    // Delete if the file not in the music.md file
+    // get all files that are not in the music.md file
     for (0..downloaded.items.len) |i| {
-        // print("{s}\n", .{downloaded.items[i].items});
-
         if (isToDelete(&downloaded.items[i], &inFile)) {
-            print("Do you want to delete: {s}?\n", .{downloaded.items[i].items});
-            var buff: [10]u8 = undefined;
-
-            const stdin = std.io.getStdIn().reader();
-
-            const input = try stdin.readUntilDelimiter(buff[0..], '\n');
-            if (std.mem.eql(u8, input, "y")) {
-                var temp: String = String.init(allocator);
-                defer temp.deinit();
-
-                try temp.appendSlice("/home/tal/Music/");
-                try temp.appendSlice(downloaded.items[i].items);
-                try temp.appendSlice(".mp3");
-
-                try fs.deleteFileAbsolute(temp.items);
-                print("Succcessfully deleted '{s}'.mp3!\n", .{temp.items});
-            }
+            var temp: String = String.init(allocator);
+            try temp.appendSlice(downloaded.items[i].items);
+            try deleteQueue.append(temp);
         }
     }
+    // Delete them
+    if (deleteQueue.items.len > 0)
+        try delete(deleteQueue, allocator);
 
     for (0..downloaded.items.len) |i| {
         downloaded.items[i].deinit();
     }
-
     for (0..inFile.items.len) |i| {
         inFile.items[i].deinit();
+    }
+    for (0..deleteQueue.items.len) |i| {
+        deleteQueue.items[i].deinit();
     }
 }
 
@@ -145,6 +137,32 @@ fn getURL(line: []const u8) []const u8 {
     }
 
     return line[i + 1 .. j];
+}
+
+fn delete(fileNames: ArrayList(String), allocator: std.mem.Allocator) !void {
+    print("Are you sure you want to delete:\n", .{});
+    for (0..fileNames.items.len) |i| {
+        print("{s}\n", .{fileNames.items[i].items});
+    }
+
+    var buff: [10]u8 = undefined;
+    const stdin = std.io.getStdIn().reader();
+    const input = try stdin.readUntilDelimiter(buff[0..], '\n');
+
+    if (!std.mem.eql(u8, input, "y"))
+        return;
+
+    for (0..fileNames.items.len) |i| {
+        var temp: String = String.init(allocator);
+        defer temp.deinit();
+
+        try temp.appendSlice("/home/tal/Music/");
+        try temp.appendSlice(fileNames.items[i].items);
+        try temp.appendSlice(".mp3");
+
+        try fs.deleteFileAbsolute(temp.items);
+        print("Succcessfully deleted '{s}'.mp3!\n", .{temp.items});
+    }
 }
 
 const expect = std.testing.expect;
