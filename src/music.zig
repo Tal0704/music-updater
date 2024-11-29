@@ -5,8 +5,10 @@ const fs = std.fs;
 const cwd = fs.cwd();
 const ArrayList = std.ArrayList;
 const String = ArrayList(u8);
+const mem = std.mem;
+const Metadata = @import("metadata.zig").metadata;
 
-pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !void {
+pub fn update(file: *fs.File, allocator: mem.Allocator, dir: []const u8) !void {
     var url: String = String.init(allocator);
     var fileName: String = String.init(allocator);
     defer url.deinit();
@@ -21,6 +23,15 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
 
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
+
+    var metadata = Metadata{
+        .album = String.init(allocator),
+        .artist = String.init(allocator),
+        .year = String.init(allocator),
+    };
+    defer metadata.deinit();
+    var album: String = String.init(allocator);
+    defer album.deinit();
 
     // Read in all files
     var walker = try musicFolder.walk(allocator);
@@ -37,18 +48,22 @@ pub fn update(file: *fs.File, allocator: std.mem.Allocator, dir: []const u8) !vo
     var inStream = buffReader.reader();
     var buf: [1024]u8 = undefined;
     while (try inStream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
+        if (line.len == 0 or line[0] == '-') {
+            continue;
+        }
         var name: String = String.init(allocator);
-        try name.appendSlice(getName(line));
+        defer name.deinit();
+        if (getName(line)) |n|
+            try name.appendSlice(n);
 
         var temp: String = String.init(allocator);
         try temp.appendSlice(name.items);
         try inFile.append(temp);
 
-        // Check if is downloaded
-        const URL = getURL(line);
         if (try isDownloaded(name.items, allocator)) {
             print("{s} is already downloaded!\n", .{name.items});
-        } else try downloadYT(URL, name.items, dir);
+        } else if (getURL(line)) |u|
+            try downloadYT(u, name.items, dir);
     }
 
     // get all files that are not in the music.md file
@@ -78,21 +93,21 @@ fn isToDelete(fileName: *String, lines: *ArrayList(String)) bool {
     var a: usize = 0;
     for (0..lines.items.len) |i| {
         a = i;
-        if (std.mem.eql(u8, lines.items[i].items, fileName.items)) {
+        if (mem.eql(u8, lines.items[i].items, fileName.items)) {
             return false;
         }
     }
     return true;
 }
 
-fn isDownloaded(name: []const u8, allocator: std.mem.Allocator) !bool {
+fn isDownloaded(name: []const u8, allocator: mem.Allocator) !bool {
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
 
     var walker = try musicFolder.walk(allocator);
     defer walker.deinit();
     while (try walker.next()) |file| {
-        if (std.mem.eql(u8, name, file.basename[0 .. file.basename.len - 4]))
+        if (mem.eql(u8, name, file.basename[0 .. file.basename.len - 4]))
             return true;
     }
     return false;
@@ -116,16 +131,23 @@ fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
     std.debug.print("{s}\n", .{result.stdout});
 }
 
-fn getName(line: []const u8) []const u8 {
+fn getName(line: []const u8) ?[]const u8 {
+    if (line.len == 0 or line[0] != '[')
+        return null;
     var i: usize = 0;
     while (line[i] != ']') {
         i += 1;
     }
+
     return line[1..i];
 }
 
-fn getURL(line: []const u8) []const u8 {
+fn getURL(line: []const u8) ?[]const u8 {
+    if (line.len == 0 or line[0] != '[')
+        return null;
     var i: usize = 0;
+    while (line[i] != ']')
+        i += 1;
 
     while (line[i] != '(') {
         i += 1;
@@ -139,7 +161,7 @@ fn getURL(line: []const u8) []const u8 {
     return line[i + 1 .. j];
 }
 
-fn delete(fileNames: ArrayList(String), allocator: std.mem.Allocator) !void {
+fn delete(fileNames: ArrayList(String), allocator: mem.Allocator) !void {
     print("Are you sure you want to delete:\n", .{});
     for (0..fileNames.items.len) |i| {
         print("{s}\n", .{fileNames.items[i].items});
@@ -149,7 +171,7 @@ fn delete(fileNames: ArrayList(String), allocator: std.mem.Allocator) !void {
     const stdin = std.io.getStdIn().reader();
     const input = try stdin.readUntilDelimiter(buff[0..], '\n');
 
-    if (!std.mem.eql(u8, input, "y"))
+    if (!mem.eql(u8, input, "y"))
         return;
 
     for (0..fileNames.items.len) |i| {
@@ -165,31 +187,83 @@ fn delete(fileNames: ArrayList(String), allocator: std.mem.Allocator) !void {
     }
 }
 
+fn getAlbum(line: []const u8) ?[]const u8 {
+    if (!mem.eql(u8, line[0..2], "## "))
+        return null;
+    var i: usize = 4;
+    while (line[i] != ']') {
+        i += 1;
+    }
+    return line[4..i];
+}
+
+fn getYear(line: []const u8) ?[]const u8 {
+    if (!mem.eql(u8, line[0..2], "## "))
+        return null;
+    var i: usize = 4;
+    while (line[i] != ']') {
+        i += 1;
+    }
+
+    while (line[i] != '(') {
+        i += 1;
+    }
+    var j = i;
+    while (line[j] != ')') {
+        j += 1;
+    }
+
+    return line[i..j];
+}
+
+fn getArtist(line: []const u8) ?[]const u8 {
+    if (!mem.eql(u8, line[0..1], "# "))
+        return null;
+    return line[4..];
+}
+
 const expect = std.testing.expect;
 test "Get File Name from Line" {
     const line = "[Metallica - Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
     const name = getName(line);
 
-    try expect(std.mem.eql(u8, name, "Metallica - Master of Puppets"));
+    if (name) |n|
+        try expect(mem.eql(u8, n, "Metallica - Master of Puppets"));
 }
 
 test "Get URL from Line" {
     const line = "[Metallica - Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
     const URL = getURL(line);
 
-    try expect(std.mem.eql(u8, URL, "https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58"));
+    if (URL) |u|
+        try expect(mem.eql(u8, u, "https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58"));
 }
 
 test "checkIfDownloaded" {
-    const line = "[Metallica - Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
+    const line = "[Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
     const name = getName(line);
 
-    try expect(try isDownloaded(name, std.testing.allocator));
+    if (name) |n|
+        try expect(try isDownloaded(n, std.testing.allocator));
 }
 
-test "update()" {
-    var file: fs.File = try cwd.openFile("/home/tal/Documents/Obsidian Vault/music/music.md", .{ .mode = .read_only });
-    defer file.close();
+test "album" {
+    const line = "## [Master of Puppets](1968)";
+    const album = getAlbum(line);
+    if (album) |a|
+        try expect(mem.eql(u8, a, "Master of Puppets"));
+}
 
-    try update(&file, std.testing.allocator);
+test "year" {
+    const line = "## [Master of Puppets](1968)";
+    const year = getYear(line);
+    if (year) |a|
+        try expect(mem.eql(u8, a, "1968"));
+}
+
+test "artist" {
+    const line = "# Metallica";
+    const artist = getArtist(line);
+    if (artist) |a|
+        try expect(mem.eql(u8, a, "Metallica"));
 }
