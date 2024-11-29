@@ -113,7 +113,8 @@ fn isDownloaded(name: []const u8, allocator: mem.Allocator) !bool {
     return false;
 }
 
-fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
+fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8, metadata: Metadata) !void {
+    metadata.year.append('"');
     const result = try ChildProcess.run(.{
         .allocator = std.heap.page_allocator,
         .argv = &[_][]const u8{
@@ -126,6 +127,10 @@ fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
             "-o",
             name,
             URL,
+            "--postprocessor-args",
+            "\"-metadata",
+            metadata.album.items,
+            metadata.artist.items,
         },
     });
     std.debug.print("{s}\n", .{result.stdout});
@@ -222,6 +227,33 @@ fn getArtist(line: []const u8) ?[]const u8 {
     return line[4..];
 }
 
+fn fixSpaces(metadata: *Metadata) !void {
+    var i: usize = 0;
+    while (i < metadata.album.items.len) {
+        if (metadata.album.items[i] == ' ') {
+            try metadata.album.insert(i, '\\');
+            i += 1;
+        }
+        i += 1;
+    }
+    i = 0;
+    while (i < metadata.year.items.len) {
+        if (metadata.year.items[i] == ' ') {
+            try metadata.year.insert(i, '\\');
+            i += 1;
+        }
+        i += 1;
+    }
+    i = 0;
+    while (i < metadata.artist.items.len) {
+        if (metadata.artist.items[i] == ' ') {
+            try metadata.artist.insert(i, '\\');
+            i += 1;
+        }
+        i += 1;
+    }
+}
+
 const expect = std.testing.expect;
 test "Get File Name from Line" {
     const line = "[Metallica - Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
@@ -266,4 +298,22 @@ test "artist" {
     const artist = getArtist(line);
     if (artist) |a|
         try expect(mem.eql(u8, a, "Metallica"));
+}
+
+test "fix spaces" {
+    var metadata = Metadata{
+        .year = String.init(std.testing.allocator),
+        .album = String.init(std.testing.allocator),
+        .artist = String.init(std.testing.allocator),
+    };
+    defer metadata.deinit();
+    try metadata.artist.appendSlice("Metallica");
+    try metadata.year.appendSlice("1989");
+    try metadata.album.appendSlice("Master of Puppets");
+
+    try fixSpaces(&metadata);
+
+    try expect(mem.eql(u8, metadata.album.items, "Master\\ of\\ Puppets"));
+    try expect(mem.eql(u8, metadata.year.items, "1989"));
+    try expect(mem.eql(u8, metadata.artist.items, "Metallica"));
 }
