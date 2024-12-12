@@ -30,8 +30,6 @@ pub fn update(file: *fs.File, allocator: mem.Allocator, dir: []const u8) !void {
         .year = String.init(allocator),
     };
     defer metadata.deinit();
-    var album: String = String.init(allocator);
-    defer album.deinit();
 
     // Read in all files
     var walker = try musicFolder.walk(allocator);
