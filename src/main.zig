@@ -3,6 +3,7 @@ const music = @import("music.zig");
 const print = std.debug.print;
 const fs = std.fs;
 const allocator = std.heap.page_allocator;
+const cwd = fs.cwd();
 
 pub fn main() anyerror!void {
     var file: fs.File = undefined;
@@ -14,5 +15,8 @@ pub fn main() anyerror!void {
     }
     defer file.close();
 
-    music.update(&file, std.heap.page_allocator, "/home/tal/Music") catch |err| print("Couldn't update music files\n{}\n", .{err});
+    var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
+    defer musicFolder.close();
+
+    music.update(&file, std.heap.page_allocator, &musicFolder) catch |err| print("Couldn't update music files\n{}\n", .{err});
 }
