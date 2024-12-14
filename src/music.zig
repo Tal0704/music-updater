@@ -1,35 +1,16 @@
-const std = @import("std");
-const ChildProcess = std.process.Child;
-const print = std.debug.print;
-const fs = std.fs;
-const cwd = fs.cwd();
-const ArrayList = std.ArrayList;
-const String = ArrayList(u8);
-const mem = std.mem;
-const Metadata = @import("metadata.zig").metadata;
-
 pub fn update(file: *fs.File, allocator: mem.Allocator, dir: []const u8) !void {
-    var url: String = String.init(allocator);
-    var fileName: String = String.init(allocator);
-    defer url.deinit();
-    defer fileName.deinit();
+    var songs: ArrayList(Song) = ArrayList(Song).init(allocator);
+    defer songs.deinit();
 
     var downloaded = ArrayList(String).init(allocator);
     defer downloaded.deinit();
-    var inFile = ArrayList(String).init(allocator);
+    var inFile = ArrayList([]const u8).init(allocator);
     defer inFile.deinit();
     var deleteQueue = ArrayList(String).init(allocator);
     defer deleteQueue.deinit();
 
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
-
-    var metadata = Metadata{
-        .album = String.init(allocator),
-        .artist = String.init(allocator),
-        .year = String.init(allocator),
-    };
-    defer metadata.deinit();
 
     // Read in all files
     var walker = try musicFolder.walk(allocator);
@@ -49,19 +30,19 @@ pub fn update(file: *fs.File, allocator: mem.Allocator, dir: []const u8) !void {
         if (line.len == 0 or line[0] == '-') {
             continue;
         }
-        var name: String = String.init(allocator);
-        defer name.deinit();
+        var song: Song = undefined;
         if (getName(line)) |n|
-            try name.appendSlice(n);
+            song.name = n[0..];
 
-        var temp: String = String.init(allocator);
-        try temp.appendSlice(name.items);
-        try inFile.append(temp);
+        if (try isDownloaded(song.name, allocator)) {
+            print("{s} is already downloaded!\n", .{song.name});
+        } else if (getURL(line)) |u| {
+            print("Downloading {s}!\n", .{song.name});
+            song.URL = u[0..];
+            try song.download(dir);
+        }
 
-        if (try isDownloaded(name.items, allocator)) {
-            print("{s} is already downloaded!\n", .{name.items});
-        } else if (getURL(line)) |u|
-            try downloadYT(u, name.items, dir);
+        try songs.append(song);
     }
 
     // get all files that are not in the music.md file
@@ -79,19 +60,16 @@ pub fn update(file: *fs.File, allocator: mem.Allocator, dir: []const u8) !void {
     for (0..downloaded.items.len) |i| {
         downloaded.items[i].deinit();
     }
-    for (0..inFile.items.len) |i| {
-        inFile.items[i].deinit();
-    }
     for (0..deleteQueue.items.len) |i| {
         deleteQueue.items[i].deinit();
     }
 }
 
-fn isToDelete(fileName: *String, lines: *ArrayList(String)) bool {
+fn isToDelete(fileName: *String, lines: *ArrayList([]const u8)) bool {
     var a: usize = 0;
     for (0..lines.items.len) |i| {
         a = i;
-        if (mem.eql(u8, lines.items[i].items, fileName.items)) {
+        if (mem.eql(u8, lines.items[i], fileName.items)) {
             return false;
         }
     }
@@ -111,8 +89,7 @@ fn isDownloaded(name: []const u8, allocator: mem.Allocator) !bool {
     return false;
 }
 
-fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8, metadata: Metadata) !void {
-    metadata.year.append('"');
+fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
     const result = try ChildProcess.run(.{
         .allocator = std.heap.page_allocator,
         .argv = &[_][]const u8{
@@ -125,10 +102,6 @@ fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8, metadata: Meta
             "-o",
             name,
             URL,
-            "--postprocessor-args",
-            "\"-metadata",
-            metadata.album.items,
-            metadata.artist.items,
         },
     });
     std.debug.print("{s}\n", .{result.stdout});
@@ -315,3 +288,14 @@ test "fix spaces" {
     try expect(mem.eql(u8, metadata.year.items, "1989"));
     try expect(mem.eql(u8, metadata.artist.items, "Metallica"));
 }
+
+const std = @import("std");
+const Metadata = @import("metadata.zig").Metadata;
+const Song = @import("song.zig").Song;
+const ChildProcess = std.process.Child;
+const print = std.debug.print;
+const fs = std.fs;
+const cwd = fs.cwd();
+const ArrayList = std.ArrayList;
+const String = ArrayList(u8);
+const mem = std.mem;
