@@ -15,8 +15,9 @@ pub fn main() anyerror!void {
     }
     defer file.close();
 
-    var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
+    const musicPath = "/home/tal/Music";
+    var musicFolder: fs.Dir = try cwd.openDir(musicPath, .{ .iterate = true });
     defer musicFolder.close();
 
-    music.update(&file, std.heap.page_allocator, &musicFolder) catch |err| print("Couldn't update music files\n{}\n", .{err});
+    music.update(&file, std.heap.page_allocator, &musicFolder, musicPath) catch |err| print("Couldn't update music files\n{}\n", .{err});
 }

@@ -1,39 +1,30 @@
-pub fn update(file: *fs.File, allocator: mem.Allocator, dir: *fs.Dir) !void {
+pub fn update(file: *fs.File, allocator: mem.Allocator, dir: *fs.Dir, musicPath: []const u8) !void {
     var songs: ArrayList(*Song) = ArrayList(*Song).init(allocator);
     defer songs.deinit();
 
     try readLibrary(&songs, file, allocator);
-    try readFiles(&songs, dir, allocator);
+    try readFiles(&songs, dir, musicPath, allocator);
 
-    print("Files To delete:\n", .{});
-    for (songs.items) |song| {
-        if (song.isToDelete) {
-            song.print();
-            print("\n\n", .{});
-        }
-    }
+    try deleteSongs(&songs);
 
-    print("Files to keep:\n", .{});
-    for (songs.items) |song| {
-        if (!song.isToDelete) {
-            song.print();
-            print("\n\n", .{});
-        }
-    }
+    try downloadSongs(&songs);
 }
 
-fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, allocator: mem.Allocator) !void {
+fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, musicPath: []const u8, allocator: mem.Allocator) !void {
     var walker = try musicFolder.walk(allocator);
     defer walker.deinit();
-    while (try walker.next()) |line| {
+    while (try walker.next()) |file| {
         var song: *Song = try allocator.create(Song);
         song.* = Song.init(allocator);
-        song.name = try song.allocator.alloc(u8, line.path.len - 4);
+        song.name = try song.allocator.alloc(u8, file.path.len - 4);
 
-        mem.copyForwards(u8, song.name.?, line.path[0 .. line.path.len - 4]);
+        mem.copyForwards(u8, song.name, file.path[0 .. file.path.len - 4]);
 
-        if (song.name) |_|
-            song.isToDelete = isDeleteSong(songs, song);
+        song.isToDelete = isDeleteSong(songs, song);
+        if (song.isToDelete) {
+            song.path = try song.allocator.alloc(u8, musicPath.len);
+            mem.copyForwards(u8, song.path.?, musicPath);
+        }
 
         if (song.isToDelete) {
             try songs.append(song);
@@ -42,15 +33,6 @@ fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, allocator: mem.Allo
             allocator.destroy(song);
         }
     }
-}
-
-fn isDeleteSong(songs: *ArrayList(*Song), song: *Song) bool {
-    for (songs.items) |currentSong| {
-        if (mem.eql(u8, song.name.?, currentSong.name.?))
-            return false;
-    }
-
-    return true;
 }
 
 fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allocator) !void {
@@ -65,7 +47,7 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
 
         if (getName(line)) |name| {
             song.name = try song.allocator.alloc(u8, name.len);
-            mem.copyForwards(u8, song.name.?, name);
+            mem.copyForwards(u8, song.name, name);
         } else {
             song.deinit();
             allocator.destroy(song);
@@ -81,17 +63,57 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
     }
 }
 
-fn isDownloaded(name: []const u8, allocator: mem.Allocator) !bool {
-    var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
-    defer musicFolder.close();
-
-    var walker = try musicFolder.walk(allocator);
-    defer walker.deinit();
-    while (try walker.next()) |file| {
-        if (mem.eql(u8, name, file.basename[0 .. file.basename.len - 4]))
-            return true;
+fn isDeleteSong(songs: *ArrayList(*Song), song: *Song) bool {
+    for (songs.items) |currentSong| {
+        if (mem.eql(u8, song.name, currentSong.name))
+            return false;
     }
-    return false;
+
+    return true;
+}
+
+fn deleteSongs(songs: *ArrayList(*Song)) !void {
+    var count: usize = 0;
+    for (songs.items) |song| {
+        if (song.isToDelete) count += 1;
+    }
+    if (count == 0) {
+        print("No songs to delete :D\n", .{});
+        return;
+    }
+
+    print("Are you sure you want to delete:\n", .{});
+    for (songs.items) |song| {
+        if (song.isToDelete) {
+            print("{s}\n", .{song.name});
+        }
+    }
+
+    print("y/N\n", .{});
+
+    var buff: [10]u8 = undefined;
+    const stdin = std.io.getStdIn().reader();
+    const input = try stdin.readUntilDelimiter(buff[0..], '\n');
+
+    if (!mem.eql(u8, input, "y")) {
+        print("Not deleteing!\n", .{});
+        return;
+    }
+
+    for (songs.items) |song| {
+        if (song.isToDelete) {
+            song.delete() catch |err| switch (err) {
+                error.PathNotFound => print("Couldn't find path for {s}\n", .{song.name}),
+                else => print("Couldn't delete file: {s}, {}\n", .{ song.name, err }),
+            };
+        }
+    }
+}
+
+fn downloadSongs(songs: *ArrayList(*Song)) !void {
+    for (songs.items) |song| {
+        _ = song;
+    }
 }
 
 fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
@@ -142,32 +164,6 @@ fn getURL(line: []const u8) ?[]const u8 {
     return line[i + 1 .. j];
 }
 
-fn delete(fileNames: ArrayList(String), allocator: mem.Allocator) !void {
-    print("Are you sure you want to delete:\n", .{});
-    for (0..fileNames.items.len) |i| {
-        print("{s}\n", .{fileNames.items[i].items});
-    }
-
-    var buff: [10]u8 = undefined;
-    const stdin = std.io.getStdIn().reader();
-    const input = try stdin.readUntilDelimiter(buff[0..], '\n');
-
-    if (!mem.eql(u8, input, "y"))
-        return;
-
-    for (0..fileNames.items.len) |i| {
-        var temp: String = String.init(allocator);
-        defer temp.deinit();
-
-        try temp.appendSlice("/home/tal/Music/");
-        try temp.appendSlice(fileNames.items[i].items);
-        try temp.appendSlice(".mp3");
-
-        try fs.deleteFileAbsolute(temp.items);
-        print("Succcessfully deleted '{s}'.mp3!\n", .{temp.items});
-    }
-}
-
 fn getAlbum(line: []const u8) ?[]const u8 {
     if (!mem.eql(u8, line[0..2], "## "))
         return null;
@@ -203,34 +199,6 @@ fn getArtist(line: []const u8) ?[]const u8 {
     return line[4..];
 }
 
-// fn fixSpaces(metadata: *Metadata) !void {
-//     var i: usize = 0;
-//     while (i < metadata.album.items.len) {
-//         if (metadata.album.items[i] == ' ') {
-//             try metadata.album.insert(i, '\\');
-//             i += 1;
-//         }
-//         i += 1;
-//     }
-//     i = 0;
-//     while (i < metadata.year.items.len) {
-//         if (metadata.year.items[i] == ' ') {
-//             try metadata.year.insert(i, '\\');
-//             i += 1;
-//         }
-//         i += 1;
-//     }
-//     i = 0;
-//     while (i < metadata.artist.items.len) {
-//         if (metadata.artist.items[i] == ' ') {
-//             try metadata.artist.insert(i, '\\');
-//             i += 1;
-//         }
-//         i += 1;
-//     }
-// }
-
-const expect = std.testing.expect;
 test "Get File Name from Line" {
     const line = "[Metallica - Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
     const name = getName(line);
@@ -245,14 +213,6 @@ test "Get URL from Line" {
 
     if (URL) |u|
         try expect(mem.eql(u8, u, "https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58"));
-}
-
-test "checkIfDownloaded" {
-    const line = "[Master of Puppets](https://www.youtube.com/watch?v=mOOzcgDLCbQ&list=WL&index=58)";
-    const name = getName(line);
-
-    if (name) |n|
-        try expect(try isDownloaded(n, std.testing.allocator));
 }
 
 test "album" {
@@ -275,34 +235,15 @@ test "artist" {
         try expect(mem.eql(u8, a, "Metallica"));
 }
 
-// test "fix spaces" {
-//     var metadata = Metadata{
-//         .year = undefined,
-//         .album = undefined,
-//         .artist = undefined,
-//     };
-//     defer metadata.deinit();
-//     metadata.artist = "Metallica";
-//     metadata.year = "1989"[0..];
-//     metadata.album = "Master of Puppets"[0..];
-
-//     try fixSpaces(&metadata);
-
-//     try expect(mem.eql(u8, metadata.album.items, "Master\\ of\\ Puppets"));
-//     try expect(mem.eql(u8, metadata.year.items, "1989"));
-//     try expect(mem.eql(u8, metadata.artist.items, "Metallica"));
-// }
-
 test "read files" {
     var musicFolder: fs.Dir = try cwd.openDir("/home/tal/Music", .{ .iterate = true });
     defer musicFolder.close();
 
     var songs: ArrayList(*Song) = ArrayList(*Song).init(std.testing.allocator);
     defer songs.deinit();
-    try readFiles(&songs, &musicFolder, std.testing.allocator);
+    try readFiles(&songs, &musicFolder, "/home/tal/Music", std.testing.allocator);
     for (0..songs.items.len) |i| {
-        if (songs.items[i].name) |name|
-            print("{s}\n", .{name});
+        print("{s}\n", .{songs.items[i].name});
     }
     for (0..songs.items.len) |i| {
         songs.items[i].deinit();
@@ -340,3 +281,4 @@ const cwd = fs.cwd();
 const ArrayList = std.ArrayList;
 const String = ArrayList(u8);
 const mem = std.mem;
+const expect = std.testing.expect;

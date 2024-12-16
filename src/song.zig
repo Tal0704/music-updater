@@ -1,27 +1,30 @@
 pub const Song = struct {
-    name: ?[]u8,
+    name: []u8,
     URL: ?[]u8,
+    path: ?[]u8,
     metadata: ?Metadata,
     isToDelete: bool,
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: @This()) void {
-        if (self.name) |name| {
-            self.allocator.free(name);
-        }
+        self.allocator.free(self.name);
         if (self.URL) |URL| {
             self.allocator.free(URL);
         }
         if (self.metadata) |metadata| {
             metadata.deinit();
         }
+        if (self.path) |path| {
+            self.allocator.free(path);
+        }
     }
 
     pub fn init(allocator: mem.Allocator) Song {
         return @This(){
-            .name = null,
+            .name = "",
             .URL = null,
             .metadata = null,
+            .path = null,
             .isToDelete = false,
             .allocator = allocator,
         };
@@ -29,7 +32,7 @@ pub const Song = struct {
 
     pub fn print(self: @This()) void {
         std.debug.print("name: {s}\nURL: {s}", .{
-            if (self.name != null) self.name.? else "",
+            self.name,
             if (self.URL != null) self.URL.? else "",
         });
     }
@@ -51,10 +54,22 @@ pub const Song = struct {
         });
         std.debug.print("{s}\n", .{result.stdout});
     }
+
+    pub fn delete(self: @This()) !void {
+        if (self.path) |path| {
+            const buffer = try std.fmt.allocPrint(self.allocator, "{s}/{s}.mp3", .{ path, self.name });
+            defer self.allocator.free(buffer);
+            try fs.deleteFileAbsolute(buffer);
+            gprint("Delete {s} succefully!\n", .{self.name});
+        } else {
+            return error.PathNotFound;
+        }
+    }
 };
 
 const std = @import("std");
 const Metadata = @import("metadata.zig").Metadata;
 const ChildProcess = std.process.Child;
 const mem = std.mem;
-const print = std.debug.print;
+const gprint = std.debug.print;
+const fs = std.fs;
