@@ -16,21 +16,20 @@ fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, musicPath: []const 
     while (try walker.next()) |file| {
         var song: *Song = try allocator.create(Song);
         song.* = Song.init(allocator);
-        song.name = try song.allocator.alloc(u8, file.path.len - 4);
 
-        mem.copyForwards(u8, song.name, file.path[0 .. file.path.len - 4]);
+        try song.name.appendSlice(file.path[0 .. file.path.len - 4]);
 
         song.isToDelete = isDeleteSong(songs, song);
         if (song.isToDelete) {
-            song.path = try song.allocator.alloc(u8, musicPath.len);
-            mem.copyForwards(u8, song.path.?, musicPath);
+            song.path = String.init(song.allocator);
+            try song.path.?.appendSlice(musicPath);
         }
 
         if (song.isToDelete) {
             try songs.append(song);
         } else {
             for (songs.items) |s| {
-                if (mem.eql(u8, s.name, song.name)) {
+                if (mem.eql(u8, s.name.items, song.name.items)) {
                     s.isDownloaded = true;
                 }
             }
@@ -44,6 +43,9 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
     var buffReader = std.io.bufferedReader(file.reader());
     var inStream = buffReader.reader();
     var buf: [1024]u8 = undefined;
+
+    var album: String = String.init(allocator);
+    defer album.deinit();
     while (try inStream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         if (line.len == 0 or line[0] == '-') continue;
 
@@ -51,17 +53,26 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
         song.* = Song.init(allocator);
 
         if (getName(line)) |name| {
-            song.name = try song.allocator.alloc(u8, name.len);
-            mem.copyForwards(u8, song.name, name);
+            try song.name.appendSlice(name);
         } else {
             song.deinit();
             allocator.destroy(song);
             continue;
         }
 
+        if (getAlbum(line)) |a| {
+            album.clearRetainingCapacity();
+            try album.appendSlice(a);
+        }
+
+        if (album.items.len > 0) {
+            song.metadata.album = String.init(song.allocator);
+            try song.metadata.album.?.appendSlice(album.items);
+        }
+
         if (getURL(line)) |URL| {
-            song.URL = try song.allocator.alloc(u8, URL.len);
-            mem.copyForwards(u8, song.URL.?, URL);
+            song.URL = String.init(song.allocator);
+            try song.URL.?.appendSlice(URL);
         }
 
         try songs.append(song);
@@ -70,7 +81,7 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
 
 fn isDeleteSong(songs: *ArrayList(*Song), song: *Song) bool {
     for (songs.items) |currentSong| {
-        if (mem.eql(u8, song.name, currentSong.name))
+        if (mem.eql(u8, song.name.items, currentSong.name.items))
             return false;
     }
 
@@ -90,7 +101,7 @@ fn deleteSongs(songs: *ArrayList(*Song)) !void {
     print("Are you sure you want to delete:\n", .{});
     for (songs.items) |song| {
         if (song.isToDelete) {
-            print("{s}\n", .{song.name});
+            print("{s}\n", .{song.name.items});
         }
     }
 
@@ -108,8 +119,8 @@ fn deleteSongs(songs: *ArrayList(*Song)) !void {
     for (songs.items) |song| {
         if (song.isToDelete) {
             song.delete() catch |err| switch (err) {
-                error.PathNotFound => print("Couldn't find path for {s}\n", .{song.name}),
-                else => print("Couldn't delete file: {s}, {}\n", .{ song.name, err }),
+                error.PathNotFound => print("Couldn't find path for {s}\n", .{song.name.items}),
+                else => print("Couldn't delete file: {s}, {}\n", .{ song.name.items, err }),
             };
         }
     }
@@ -130,9 +141,9 @@ fn downloadSongs(songs: *ArrayList(*Song), dir: []const u8) void {
     for (songs.items) |song| {
         if (!song.isToDelete) {
             if (song.download(dir)) {
-                print("Downloaded {s} succefully!\n", .{song.name});
+                print("Downloaded {s} succefully!\n", .{song.name.items});
             } else |err| {
-                print("Couldn't download {s}: {}\n", .{ song.name, err });
+                print("Couldn't download {s}: {}\n", .{ song.name.items, err });
             }
         }
     }
@@ -169,7 +180,7 @@ fn getURL(line: []const u8) ?[]const u8 {
 }
 
 fn getAlbum(line: []const u8) ?[]const u8 {
-    if (!mem.eql(u8, line[0..2], "## "))
+    if (!mem.eql(u8, line[0..2], "##"))
         return null;
     var i: usize = 4;
     while (line[i] != ']') {
@@ -179,7 +190,7 @@ fn getAlbum(line: []const u8) ?[]const u8 {
 }
 
 fn getYear(line: []const u8) ?[]const u8 {
-    if (!mem.eql(u8, line[0..2], "## "))
+    if (!mem.eql(u8, line[0..2], "##"))
         return null;
     var i: usize = 4;
     while (line[i] != ']') {
@@ -247,7 +258,7 @@ test "read files" {
     defer songs.deinit();
     try readFiles(&songs, &musicFolder, "/home/tal/Music", std.testing.allocator);
     for (0..songs.items.len) |i| {
-        print("{s}\n", .{songs.items[i].name});
+        print("{s}\n", .{songs.items[i].name.items});
     }
     for (0..songs.items.len) |i| {
         songs.items[i].deinit();

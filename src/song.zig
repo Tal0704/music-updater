@@ -1,31 +1,29 @@
 pub const Song = struct {
-    name: []u8,
-    URL: ?[]u8,
-    path: ?[]u8,
-    metadata: ?Metadata,
+    name: String,
+    URL: ?String,
+    path: ?String,
+    metadata: Metadata,
     isDownloaded: bool,
     isToDelete: bool,
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: @This()) void {
-        self.allocator.free(self.name);
+        self.name.deinit();
+        self.metadata.deinit();
         if (self.URL) |URL| {
-            self.allocator.free(URL);
-        }
-        if (self.metadata) |metadata| {
-            metadata.deinit();
+            URL.deinit();
         }
         if (self.path) |path| {
-            self.allocator.free(path);
+            path.deinit();
         }
     }
 
     pub fn init(allocator: mem.Allocator) Song {
         return @This(){
-            .name = "",
+            .name = String.init(allocator),
             .URL = null,
-            .metadata = null,
             .path = null,
+            .metadata = Metadata.init(),
             .isToDelete = false,
             .isDownloaded = false,
             .allocator = allocator,
@@ -34,8 +32,8 @@ pub const Song = struct {
 
     pub fn print(self: @This()) void {
         std.debug.print("name: {s}\nURL: {s}", .{
-            self.name,
-            if (self.URL != null) self.URL.? else "",
+            self.name.items,
+            if (self.URL != null) self.URL.?.items else "",
         });
     }
 
@@ -51,23 +49,23 @@ pub const Song = struct {
                     "-P",
                     dir,
                     "-o",
-                    self.name,
-                    URL,
+                    self.name.items,
+                    URL.items,
                     "-N",
                     "15",
                     "-q",
                 },
             });
-            std.debug.print("{s}\n", .{result.stdout});
+            std.debug.print("{s}", .{result.stdout});
         } else return error.URLNotFound;
     }
 
     pub fn delete(self: @This()) !void {
         if (self.path) |path| {
-            const buffer = try std.fmt.allocPrint(self.allocator, "{s}/{s}.mp3", .{ path, self.name });
+            const buffer = try std.fmt.allocPrint(self.allocator, "{s}/{s}.mp3", .{ path.items, self.name.items });
             defer self.allocator.free(buffer);
             try fs.deleteFileAbsolute(buffer);
-            gprint("Delete {s} succefully!\n", .{self.name});
+            gprint("Delete {s} succefully!\n", .{self.name.items});
         } else {
             return error.PathNotFound;
         }
@@ -80,3 +78,4 @@ const ChildProcess = std.process.Child;
 const mem = std.mem;
 const gprint = std.debug.print;
 const fs = std.fs;
+const String = std.ArrayList(u8);
