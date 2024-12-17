@@ -7,7 +7,7 @@ pub fn update(file: *fs.File, allocator: mem.Allocator, dir: *fs.Dir, musicPath:
 
     try deleteSongs(&songs);
 
-    try downloadSongs(&songs);
+    downloadSongs(&songs, musicPath);
 }
 
 fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, musicPath: []const u8, allocator: mem.Allocator) !void {
@@ -110,9 +110,16 @@ fn deleteSongs(songs: *ArrayList(*Song)) !void {
     }
 }
 
-fn downloadSongs(songs: *ArrayList(*Song)) !void {
+fn downloadSongs(songs: *ArrayList(*Song), dir: []const u8) void {
+    print("Downloading songs...\n", .{});
     for (songs.items) |song| {
-        _ = song;
+        if (!song.isDownloaded and !song.isToDelete) {
+            if (song.download(dir)) {
+                print("Downloaded {s} succefully!\n", .{song.name});
+            } else |err| {
+                print("Couldn't download {s}: {}\n", .{ song.name, err });
+            }
+        }
     }
 }
 

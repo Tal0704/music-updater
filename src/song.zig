@@ -3,6 +3,7 @@ pub const Song = struct {
     URL: ?[]u8,
     path: ?[]u8,
     metadata: ?Metadata,
+    isDownloaded: bool,
     isToDelete: bool,
     allocator: std.mem.Allocator,
 
@@ -26,6 +27,7 @@ pub const Song = struct {
             .metadata = null,
             .path = null,
             .isToDelete = false,
+            .isDownloaded = false,
             .allocator = allocator,
         };
     }
@@ -38,21 +40,23 @@ pub const Song = struct {
     }
 
     pub fn download(self: @This(), dir: []const u8) !void {
-        const result = try ChildProcess.run(.{
-            .allocator = std.heap.page_allocator,
-            .argv = &[_][]const u8{
-                "yt-dlp",
-                "-x",
-                "--audio-format",
-                "mp3",
-                "-P",
-                dir,
-                "-o",
-                self.name,
-                self.URL,
-            },
-        });
-        std.debug.print("{s}\n", .{result.stdout});
+        if (self.URL) |URL| {
+            const result = try ChildProcess.run(.{
+                .allocator = std.heap.page_allocator,
+                .argv = &[_][]const u8{
+                    "yt-dlp",
+                    "-x",
+                    "--audio-format",
+                    "mp3",
+                    "-P",
+                    dir,
+                    "-o",
+                    self.name,
+                    URL,
+                },
+            });
+            std.debug.print("{s}\n", .{result.stdout});
+        } else return error.URLNotFound;
     }
 
     pub fn delete(self: @This()) !void {
