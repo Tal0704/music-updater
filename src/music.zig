@@ -116,9 +116,19 @@ fn deleteSongs(songs: *ArrayList(*Song)) !void {
 }
 
 fn downloadSongs(songs: *ArrayList(*Song), dir: []const u8) void {
+    var count: usize = 0;
+    for (songs.items) |song| {
+        if (!song.isDownloaded)
+            count += 1;
+    }
+    if (count == 0) {
+        print("No songs to download!\n", .{});
+        return;
+    }
+
     print("Downloading songs...\n", .{});
     for (songs.items) |song| {
-        if (!song.isDownloaded and !song.isToDelete) {
+        if (!song.isToDelete) {
             if (song.download(dir)) {
                 print("Downloaded {s} succefully!\n", .{song.name});
             } else |err| {

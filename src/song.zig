@@ -53,6 +53,9 @@ pub const Song = struct {
                     "-o",
                     self.name,
                     URL,
+                    "-N",
+                    "15",
+                    "-q",
                 },
             });
             std.debug.print("{s}\n", .{result.stdout});
