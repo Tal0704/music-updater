@@ -29,6 +29,11 @@ fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, musicPath: []const 
         if (song.isToDelete) {
             try songs.append(song);
         } else {
+            for (songs.items) |s| {
+                if (mem.eql(u8, s.name, song.name)) {
+                    s.isDownloaded = true;
+                }
+            }
             song.deinit();
             allocator.destroy(song);
         }
