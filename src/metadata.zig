@@ -3,17 +3,24 @@ const ArrayList = std.ArrayList;
 const String = ArrayList(u8);
 
 pub const Metadata = struct {
-    album: ?[]const u8,
-    artist: ?[]const u8,
-    year: ?[]const u8,
-    allocator: std.mem.Allocator,
+    album: ?String,
+    artist: ?String,
+    year: ?String,
+
+    pub fn init() Metadata {
+        return @This(){
+            .album = null,
+            .artist = null,
+            .year = null,
+        };
+    }
 
     pub fn deinit(self: @This()) void {
         if (self.album) |album|
-            self.allocator.free(album);
+            album.deinit();
         if (self.artist) |artist|
-            self.allocator.free(artist);
+            artist.deinit();
         if (self.year) |year|
-            self.allocator.free(year);
+            year.deinit();
     }
 };
