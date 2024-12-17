@@ -123,24 +123,6 @@ fn downloadSongs(songs: *ArrayList(*Song), dir: []const u8) void {
     }
 }
 
-fn downloadYT(URL: []const u8, name: []const u8, dir: []const u8) !void {
-    const result = try ChildProcess.run(.{
-        .allocator = std.heap.page_allocator,
-        .argv = &[_][]const u8{
-            "yt-dlp",
-            "-x",
-            "--audio-format",
-            "mp3",
-            "-P",
-            dir,
-            "-o",
-            name,
-            URL,
-        },
-    });
-    std.debug.print("{s}\n", .{result.stdout});
-}
-
 fn getName(line: []const u8) ?[]const u8 {
     if (line.len == 0 or line[0] != '[')
         return null;
