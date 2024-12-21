@@ -1,0 +1,9 @@
+-x
+c++
+-Wall
+-Wextra
+-Werror
+-Iinclude
+-Ilibs/json/single_include/nlohmann
+-Wno-unused-paramater
+-Wno-unused-variable
