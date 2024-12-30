@@ -32,7 +32,7 @@ WARNINGS = -Wall -Wpedantic -Wextra -Wno-unused-parameter
 LDFLAGS = 
 
 # Libraries to link
-LDLIBS = 
+LDLIBS =
 
 # Target OS detection
 ifeq ($(OS),Windows_NT) # OS is a preexisting environment variable on Windows

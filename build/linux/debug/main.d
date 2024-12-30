@@ -1,4 +1,4 @@
-build/linux/debug/main.o: src/main.cpp \
- libs/json/single_include/nlohmann/json.hpp include/song.hpp
-libs/json/single_include/nlohmann/json.hpp:
+build/linux/debug/main.o: src/main.cpp include/getters.hpp \
+ include/song.hpp
+include/getters.hpp:
 include/song.hpp:
