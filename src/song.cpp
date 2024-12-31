@@ -72,7 +72,6 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
 	ffmpeg += "-metadata album='" + song.metadata.album + "' ";
 	ffmpeg += "-metadata date='" + song.metadata.year + "' ";
-	ffmpeg += "-metadata lyrics='" + song.metadata.lyrics + "' ";
 	ffmpeg += "-metadata artist='" + song.metadata.artist + "' ";
 	ffmpeg += "-metadata track='" + std::to_string(song.metadata.trackNumber) + "' ";
 	ffmpeg += " -loglevel quiet ";

@@ -22,3 +22,4 @@ void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Song::P
 
 void populateSong(Song::Ptr& song);
 
+void addTotalTracks(std::vector<Song::Ptr>& songs);

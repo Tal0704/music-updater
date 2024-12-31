@@ -1,8 +1,9 @@
 #include <getters.hpp>
 #include <algorithm>
-#include <iostream>
+#include <json.hpp>
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 std::optional<std::string> getName(const std::string& line) {
 	if(line.length() == 0 || line[0] != '[')
@@ -41,7 +42,6 @@ std::vector<Song::Ptr> getLibrary(std::ifstream& inFile) {
 	while(std::getline(inFile, line)) {
 		Song::Ptr song = std::make_unique<Song>();
 
-		std::cout << line << "\n";
 		if (auto alb = getAlbum(line))
 			album = alb.value();
 		if(auto name = getName(line))
@@ -59,6 +59,7 @@ std::vector<Song::Ptr> getLibrary(std::ifstream& inFile) {
 			trackNumber = 1;
 		}
 	}
+	addTotalTracks(songs);
 	return songs;
 }
 
@@ -106,5 +107,27 @@ void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Song::P
 		else {
 			library.erase(found);
 		}
+	}
+}
+
+void populateSong(Song::Ptr& song) { 
+	json data = json::parse(std::ifstream("data.json"));
+	for(auto& album: data["albums"]["items"]) {
+		if(album["album_type"].dump() == "album" && album["total_tracks"] == song->metadata.totalTracks) {
+			song->metadata.imageUrl = album["images"][0].dump();
+			song->metadata.year = album["release_data"].dump();
+			song->metadata.year = song->metadata.year.substr(0, 4);
+			song->metadata.artist = album["artists"][0]["name"].dump();
+		}
+	}
+}
+
+void addTotalTracks(std::vector<Song::Ptr>& songs) {
+	for(auto& song: songs) {
+		auto currentAlbum = song->metadata.album;
+		auto count = std::count_if(songs.begin(), songs.end(), [&](Song::Ptr& s)->bool {
+					return s->metadata.album == currentAlbum;
+				});
+		song->metadata.totalTracks = count;
 	}
 }
