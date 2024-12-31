@@ -1,5 +1,8 @@
 #include <getters.hpp>
 #include <algorithm>
+#include <iostream>
+
+namespace fs = std::filesystem;
 
 std::optional<std::string> getName(const std::string& line) {
 	if(line.length() == 0 || line[0] != '[')
@@ -33,13 +36,28 @@ std::optional<std::string> getAlbum(const std::string& line) {
 std::vector<Song::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
 	std::vector<Song::Ptr> songs;
+	int trackNumber = 1;
+	std::string album;
 	while(std::getline(inFile, line)) {
 		Song::Ptr song = std::make_unique<Song>();
+
+		std::cout << line << "\n";
+		if (auto alb = getAlbum(line))
+			album = alb.value();
 		if(auto name = getName(line))
-			song->name = name.value();
+		{
+			song->name = getName(line).value();
+			song->metadata.trackNumber = trackNumber++;
+
+			if(album != "")
+				song->metadata.album = album;
+		}
 
 		if(song->name.length() > 0)
 			songs.emplace_back(std::move(song));
+		if(line == "") {
+			trackNumber = 1;
+		}
 	}
 	return songs;
 }
@@ -57,7 +75,7 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	return songs;
 }
 
-void cleanDuplicateSongs(std::vector<Song::Ptr>& songs) {
+void cleanLibrary(std::vector<Song::Ptr>& songs) {
 	for(auto it = songs.begin(); it != songs.end();) {
 		auto& song = *it;
 		auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& s) -> bool {
@@ -73,6 +91,20 @@ void cleanDuplicateSongs(std::vector<Song::Ptr>& songs) {
 		}
 		else {
 			++it;
+		}
+	}
+}
+
+void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Song::Ptr>& library, const fs::path& path) {
+	for(auto downloadIt = downloaded.begin(); downloadIt != downloaded.end(); ++downloadIt) {
+		auto found = std::find_if(library.begin(), library.end(), [&](Song::Ptr& lib) -> bool {
+				return lib->name == downloadIt->get()->name.substr(0, downloadIt->get()->name.size() - 4);
+				});
+		if(found == library.end()) {
+			fs::remove(path.string() + "/" + downloadIt->get()->name);
+		}
+		else {
+			library.erase(found);
 		}
 	}
 }

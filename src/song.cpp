@@ -1,6 +1,7 @@
 #include <song.hpp>
 #include <iostream>
 #include <array>
+#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -10,10 +11,14 @@ Song::Song()
 
 }
 
+Song::Song(const std::string& name, const std::string& URL)
+	:name(name), URL(URL)
+{
+}
+
 Song::Song(const std::string& name)
 	:name(name)
 {
-
 }
 
 std::ostream& operator << (std::ostream& stream, const Song& song) {
@@ -25,11 +30,11 @@ bool Song::isFile() {
 	return std::string(name.end() - 4, name.end() - 1) == ".mp";
 }
 
-std::string exec(const char* cmd) {
+std::string exec(const std::string& cmd) {
     std::array<char, 128> buffer;
     std::string result;
     // Open the command for reading
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
     if (!pipe) {
         throw std::runtime_error("popen() failed!");
     }
@@ -40,18 +45,47 @@ std::string exec(const char* cmd) {
     return result;
 }
 
-void Song::download(const fs::path& path) {
-	std::string s("yt-dlp -x --audio-format mp3 ");
-	s += URL;
-	s += " -P ";
-	s += path.c_str();
-	s += " -o \"";
-	s += name;
-	s += "\" -q";
-
-	auto c = exec(s.c_str());
-	std::cout << "Command: " << s << "\n";
-
+std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
+	std::string yt_dlp("yt-dlp -x --audio-format mp3 ");
+	yt_dlp += URL;
+	yt_dlp += " -P ";
+	yt_dlp += path;
+	yt_dlp += " -o temp -q";
+	return yt_dlp;
 }
 
+std::string cURLCommand(const std::string& URL, const std::string& path, const std::string& name) {
+	std::string curlImage("curl ");
+	curlImage += URL;
+	curlImage += " --output ";
+	curlImage += path;
+	curlImage += "/";
+	curlImage += name;
+	curlImage += ".png";
+	return curlImage;
+}
 
+std::string ffmpegCommand(const std::string& path, const Song& song) {
+	std::string ffmpeg("ffmpeg -y -i ");
+	ffmpeg += path + "/" + "temp.mp3 -i ";
+	ffmpeg += path + "/" + song.name + ".png ";
+	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
+	ffmpeg += "-metadata album='" + song.metadata.album + "' ";
+	ffmpeg += "-metadata date='" + song.metadata.year + "' ";
+	ffmpeg += "-metadata lyrics='" + song.metadata.lyrics + "' ";
+	ffmpeg += "-metadata artist='" + song.metadata.artist + "' ";
+	ffmpeg += "-metadata track='" + std::to_string(song.metadata.trackNumber) + "' ";
+	ffmpeg += " -loglevel quiet ";
+	ffmpeg += path + "/" + song.name + ".mp3 ";
+	std::cout << ffmpeg << "\n";
+	return ffmpeg;
+}
+
+void Song::download(const fs::path& path) {
+	exec(yt_dlpCommand(URL, path.c_str()));
+	exec(cURLCommand(metadata.imageUrl, path.string(), name));
+	exec(ffmpegCommand(path.c_str(), *this));
+	/* std::this_thread::sleep_for(std::chrono::milliseconds(100)); */
+	fs::remove(path.string() + "/temp.mp3");
+	fs::remove(path.string() + "/" + name + ".png");
+}
