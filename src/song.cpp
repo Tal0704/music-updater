@@ -1,23 +1,18 @@
 #include <song.hpp>
 #include <iostream>
 #include <array>
-#include <thread>
+#include <album.hpp>
 
 namespace fs = std::filesystem;
 
-Song::Song()
-	: name("")
+Song::Song(const std::unique_ptr<Album>& album)
+	: album(album)
 {
 
 }
 
-Song::Song(const std::string& name, const std::string& URL)
-	:name(name), URL(URL)
-{
-}
-
-Song::Song(const std::string& name)
-	:name(name)
+Song::Song(const std::string& name, const std::unique_ptr<Album>& album)
+	:album(album), name(name)
 {
 }
 
@@ -70,10 +65,10 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += path + "/" + "temp.mp3 -i ";
 	ffmpeg += path + "/" + song.name + ".png ";
 	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
-	ffmpeg += "-metadata album='" + song.metadata.album + "' ";
-	ffmpeg += "-metadata date='" + song.metadata.year + "' ";
-	ffmpeg += "-metadata artist='" + song.metadata.artist + "' ";
-	ffmpeg += "-metadata track='" + std::to_string(song.metadata.trackNumber) + "' ";
+	ffmpeg += "-metadata album='" + song.album->name + "' ";
+	ffmpeg += "-metadata date='" + song.album->year + "' ";
+	ffmpeg += "-metadata artist='" + song.album->artist + "' ";
+	ffmpeg += "-metadata track='" + std::to_string(song.trackNumber) + "' ";
 	ffmpeg += " -loglevel quiet ";
 	ffmpeg += path + "/" + song.name + ".mp3 ";
 	std::cout << ffmpeg << "\n";
@@ -82,9 +77,8 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 
 void Song::download(const fs::path& path) {
 	exec(yt_dlpCommand(URL, path.c_str()));
-	exec(cURLCommand(metadata.imageUrl, path.string(), name));
+	exec(cURLCommand(album->imageURL, path.string(), name));
 	exec(ffmpegCommand(path.c_str(), *this));
-	/* std::this_thread::sleep_for(std::chrono::milliseconds(100)); */
 	fs::remove(path.string() + "/temp.mp3");
 	fs::remove(path.string() + "/" + name + ".png");
 }

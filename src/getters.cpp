@@ -28,39 +28,45 @@ std::optional<std::string> getLink(const std::string& line) {
 }
 
 std::optional<std::string> getAlbum(const std::string& line) {
-	if(line.length() == 0 || line.find_first_of("##") != 0)
+	if(line.length() == 0 || !line.starts_with("## "))
 		return {};
 
 	return std::string(line.begin() + 3, line.end());
 }
 
-std::vector<Song::Ptr> getLibrary(std::ifstream& inFile) {
+#include <iostream>
+std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
-	std::vector<Song::Ptr> songs;
-	int trackNumber = 1;
-	std::string album;
+	std::vector<Album::Ptr> albums;
 	while(std::getline(inFile, line)) {
-		Song::Ptr song = std::make_unique<Song>();
-
-		if (auto alb = getAlbum(line))
-			album = alb.value();
-		if(auto name = getName(line))
-		{
-			song->name = getName(line).value();
-			song->metadata.trackNumber = trackNumber++;
-
-			if(album != "")
-				song->metadata.album = album;
+		Album::Ptr album = std::make_unique<Album>();
+		auto albumName = getAlbum(line);
+		if(!albumName.has_value()) {
+			continue;
 		}
+		album->name = albumName.value();
 
-		if(song->name.length() > 0)
-			songs.emplace_back(std::move(song));
-		if(line == "") {
-			trackNumber = 1;
+		int i = 1;
+		while(line != "") {
+			if(!std::getline(inFile, line)) {
+				break;
+			}
+			Song::Ptr song = std::make_unique<Song>(album);
+			auto songName = getName(line);
+			song->name = songName.value_or("");
+			if(auto URL = getLink(line)) {
+				song->URL = URL.value_or("");
+			}
+
+			if(song->name.length() > 0) {
+				song->trackNumber = i++;
+				album->songs.emplace_back(std::move(song));
+			}
 		}
+		albums.emplace_back(std::move(album));
 	}
-	addTotalTracks(songs);
-	return songs;
+
+	return albums;
 }
 
 std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
@@ -68,9 +74,9 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	for(const auto& pathIt: fs::directory_iterator(path)) {
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		Song::Ptr song = std::make_unique<Song>(std::string(pathstr.begin() + lastSlash + 1, pathstr.end()));
+		/* Song::Ptr song = std::make_unique<Song>(std::string(pathstr.begin() + lastSlash + 1, pathstr.end())); */
 
-		songs.emplace_back(std::move(song));
+		/* songs.emplace_back(std::move(song)); */
 	}
 
 	return songs;
@@ -110,24 +116,15 @@ void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Song::P
 	}
 }
 
-void populateSong(Song::Ptr& song) { 
+void populateAlbum(Album::Ptr& albumToPopulate) { 
+	auto& song = albumToPopulate->songs[0];
 	json data = json::parse(std::ifstream("data.json"));
 	for(auto& album: data["albums"]["items"]) {
-		if(album["album_type"].dump() == "album" && album["total_tracks"] == song->metadata.totalTracks) {
-			song->metadata.imageUrl = album["images"][0].dump();
-			song->metadata.year = album["release_data"].dump();
-			song->metadata.year = song->metadata.year.substr(0, 4);
-			song->metadata.artist = album["artists"][0]["name"].dump();
+		if(album["album_type"].dump() == "album" && album["total_tracks"] == albumToPopulate->songs.size()) {
+			song->album->imageURL = album["images"][0].dump();
+			song->album->year = album["release_data"].dump();
+			song->album->year = song->album->year.substr(0, 4);
+			song->album->artist = album["artists"][0]["name"].dump();
 		}
-	}
-}
-
-void addTotalTracks(std::vector<Song::Ptr>& songs) {
-	for(auto& song: songs) {
-		auto currentAlbum = song->metadata.album;
-		auto count = std::count_if(songs.begin(), songs.end(), [&](Song::Ptr& s)->bool {
-					return s->metadata.album == currentAlbum;
-				});
-		song->metadata.totalTracks = count;
 	}
 }

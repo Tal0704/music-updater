@@ -1,4 +1,3 @@
-build/linux/debug/song.o: src/song.cpp include/song.hpp \
- include/metadata.hpp
+build/linux/debug/song.o: src/song.cpp include/song.hpp include/album.hpp
 include/song.hpp:
-include/metadata.hpp:
+include/album.hpp:
