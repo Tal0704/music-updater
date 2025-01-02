@@ -1,6 +1,7 @@
 #include <getters.hpp>
 #include <algorithm>
 #include <json.hpp>
+#include <iostream>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -34,7 +35,6 @@ std::optional<std::string> getAlbum(const std::string& line) {
 	return std::string(line.begin() + 3, line.end());
 }
 
-#include <iostream>
 std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
 	std::vector<Album::Ptr> albums;
@@ -71,12 +71,15 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 
 std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	std::vector<Song::Ptr> songs;
+	Album::Ptr placeHolder;
+	
 	for(const auto& pathIt: fs::directory_iterator(path)) {
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		/* Song::Ptr song = std::make_unique<Song>(std::string(pathstr.begin() + lastSlash + 1, pathstr.end())); */
+		Song::Ptr song = std::make_unique<Song>(placeHolder);
+		song->name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
 
-		/* songs.emplace_back(std::move(song)); */
+		songs.emplace_back(std::move(song));
 	}
 
 	return songs;
@@ -102,13 +105,18 @@ void cleanLibrary(std::vector<Song::Ptr>& songs) {
 	}
 }
 
-void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Song::Ptr>& library, const fs::path& path) {
+void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const fs::path& path) {
 	for(auto downloadIt = downloaded.begin(); downloadIt != downloaded.end(); ++downloadIt) {
-		auto found = std::find_if(library.begin(), library.end(), [&](Song::Ptr& lib) -> bool {
-				return lib->name == downloadIt->get()->name.substr(0, downloadIt->get()->name.size() - 4);
+		auto found = std::find_if(library.begin(), library.end(), [&](Album::Ptr& album) -> bool {
+				auto& songs = album.get()->songs;
+				auto a = std::any_of(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
+							return song->name == downloadIt->get()->name.substr(0, downloadIt->get()->name.size() - 4);
+						});
+				return a;
 				});
 		if(found == library.end()) {
-			fs::remove(path.string() + "/" + downloadIt->get()->name);
+			std::cout << "deleted: " << path.string() + "/" + downloadIt->get()->name;
+			/* fs::remove(path.string() + "/" + downloadIt->get()->name); */
 		}
 		else {
 			library.erase(found);

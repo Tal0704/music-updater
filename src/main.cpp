@@ -35,19 +35,15 @@ void testingDownload() {
 void testingunneeded() {
 	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
 	fs::path musicPath = "/home/tal/Music";
-	/* std::vector<Song::Ptr> downloaded = getDownloaded(musicPath); */
-	/* std::cout << getName("[Battery](https://www.youtube.com/watch?v=vA1nlwTbCvg&list=OLAK5uy_lHtcjdo7MU4A3Tt3MuErEdEOOqs4UgngE&index=1)").value_or("no value") << "\n"; */
-
+	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
-	for(auto& album: library) {
-		for(auto& song: album->songs) {
-			std::cout << song->trackNumber << ": " << album->name << " - " << song->name << " | " << album->artist << " | " << album->year << "\n";
-		}
-		std::cout << std::endl;
+	deleteUnneededSongs(downloaded, library, musicPath);
+
+	for(auto& album: downloaded) {
+		std::cout << album->name << "\n";
 	}
 
-	/* deleteUnneededSongs(downloaded, library, musicPath); */
 
 }
 
