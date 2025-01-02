@@ -1,9 +1,7 @@
 #include <getters.hpp>
-#include <vector>
 #include <song.hpp>
 #include <fstream>
 #include <iostream>
-/* #include <iomanip> */
 #include <json.hpp>
 
 namespace fs = std::filesystem;
@@ -38,12 +36,9 @@ void testingunneeded() {
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
-	deleteUnneededSongs(downloaded, library, musicPath);
+	std::cout << std::endl;
 
-	for(auto& album: downloaded) {
-		std::cout << album->name << "\n";
-	}
-
+	cleanLibrary(downloaded, library);
 
 }
 

@@ -15,8 +15,6 @@ std::optional<std::string> getLink(const std::string& line);
 std::vector<Album::Ptr> getLibrary(std::ifstream& inFile);
 std::vector<Song::Ptr> getDownloaded(const std::filesystem::path& path);
 
-void cleanLibrary(std::vector<Song::Ptr>& songs);
-
-void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const std::filesystem::path& path);
+void cleanLibrary(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library);
 
 void populateAlbumMetadata(Album::Ptr& album);

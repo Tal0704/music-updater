@@ -105,21 +105,22 @@ void cleanLibrary(std::vector<Song::Ptr>& songs) {
 	}
 }
 
-void deleteUnneededSongs(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const fs::path& path) {
-	for(auto downloadIt = downloaded.begin(); downloadIt != downloaded.end(); ++downloadIt) {
-		auto found = std::find_if(library.begin(), library.end(), [&](Album::Ptr& album) -> bool {
-				auto& songs = album.get()->songs;
-				auto a = std::any_of(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
-							return song->name == downloadIt->get()->name.substr(0, downloadIt->get()->name.size() - 4);
-						});
-				return a;
-				});
-		if(found == library.end()) {
-			std::cout << "deleted: " << path.string() + "/" + downloadIt->get()->name;
-			/* fs::remove(path.string() + "/" + downloadIt->get()->name); */
-		}
-		else {
-			library.erase(found);
+void cleanLibrary(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library) {
+	// Loop over the downloaded songs
+	for(auto it = downloaded.begin(); it != downloaded.end(); ++it) {
+		auto& downloadedSong = *it;
+		// Loop over all the albums in the library
+		for(auto& album: library) {
+			auto& songs = album->songs;
+			// For every album find the song that is in library and is already downloaded
+			auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
+						return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
+					});
+			// If not found any song, delete it. Else erase it from the library
+			if(found != songs.end()) {
+				songs.erase(found);
+				break;
+			}
 		}
 	}
 }
