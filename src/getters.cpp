@@ -105,6 +105,22 @@ void cleanLibrary(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& l
 	}
 }
 
+void deleteUnneeded(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const fs::path& path) {
+	std::vector<const Song*> songs;
+	for(auto& album: library) {
+		for(auto& song: album->songs)
+			songs.emplace_back(song.get());
+	}
+	for(auto& downloadedSong: downloaded) {
+		auto found = std::find_if(songs.begin(), songs.end(), [&](const Song* song) -> bool {
+					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
+				});
+		if(found == songs.end()) {
+			fs::remove(path.string() + "/" + downloadedSong->name);
+		}
+	}
+}
+
 void populateAlbum(Album::Ptr& albumToPopulate) { 
 	auto& song = albumToPopulate->songs[0];
 	json data = json::parse(std::ifstream("data.json"));

@@ -38,7 +38,7 @@ void testingunneeded() {
 
 	std::cout << std::endl;
 
-	cleanLibrary(downloaded, library);
+	deleteUnneeded(downloaded, library, musicPath);
 
 }
 
