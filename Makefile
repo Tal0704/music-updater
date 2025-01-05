@@ -18,7 +18,7 @@ SRCS := $(sort $(shell find $(SRC_DIR) -name '*.cpp'))
 
 # Includes
 INCLUDE_DIR = include
-INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann
+INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann -Ilibs/CLI11/include
 
 # C preprocessor settings
 CPPFLAGS = $(INCLUDES) -MMD -MP
