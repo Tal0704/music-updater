@@ -66,7 +66,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += path + "/" + song.name + ".png ";
 	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
 	ffmpeg += "-metadata album='" + song.album->name + "' ";
-	ffmpeg += "-metadata date='" + song.album->year + "' ";
+	/* ffmpeg += "-metadata date='" + song.album->year + "' "; */
 	ffmpeg += "-metadata artist='" + song.album->artist + "' ";
 	ffmpeg += "-metadata track='" + std::to_string(song.trackNumber) + "' ";
 	ffmpeg += " -loglevel quiet ";
@@ -75,7 +75,9 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 }
 
 void Song::download(const fs::path& path) {
-	exec(yt_dlpCommand(URL, path.c_str()));
+	/* exec(yt_dlpCommand(URL, path.c_str())); */
+	std::cout << "curl" << "\n";
+	std::cout << album->imageURL << " | " << album->year << " | " << album->artist << " | " << album->name << "\n";
 	exec(cURLCommand(album->imageURL, path.string(), name));
 	exec(ffmpegCommand(path.c_str(), *this));
 	fs::remove(path.string() + "/temp.mp3");

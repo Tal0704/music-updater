@@ -123,17 +123,3 @@ void deleteUnneeded(const std::vector<Song::Ptr>& downloaded, std::vector<Album:
 		}
 	}
 }
-
-void populateAlbum(Album::Ptr& albumToPopulate) { 
-	auto& song = albumToPopulate->songs[0];
-	json data = json::parse(std::ifstream("data.json"));
-	for(auto& album: data["albums"]["items"]) {
-		if(album["album_type"].dump() == "album" && album["total_tracks"] == albumToPopulate->songs.size()) {
-			song->album->imageURL = album["images"][0].dump();
-			song->album->year = album["release_data"].dump();
-			song->album->year = song->album->year.substr(0, 4);
-			song->album->artist = album["artists"][0]["name"].dump();
-		}
-	}
-}
-

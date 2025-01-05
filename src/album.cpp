@@ -32,16 +32,16 @@ std::string getSearchTerm(const Album& album)
 }
 
 void Album::populateMetadata(const char* bearer) {
-	auto *album = this;
 	std::string curlCommand = "curl --request GET --url 'https://api.spotify.com/v1/search?q=";
 	
-	curlCommand += getSearchTerm(*album);
+	curlCommand += getSearchTerm(*this);
 	curlCommand += "&type=album' --header 'Authorization: Bearer ";
 	curlCommand += bearer;
 	curlCommand += "' --output data.json -s";
 	system(curlCommand.c_str());
 		 
 	json data = json::parse(std::ifstream("data.json"));
+	/* std::cout << data << "\n"; */
 
 	for(auto& albumJson: data["albums"]["items"]) {
 		auto albumType = albumJson["album_type"].template get<std::string>();
@@ -49,14 +49,15 @@ void Album::populateMetadata(const char* bearer) {
 		std::transform(albumName.begin(), albumName.end(), albumName.begin(), ::tolower);
 
 		std::string albumNameLowerCase;
-		std::transform(album->name.begin(), album->name.end(), albumNameLowerCase.begin(), ::tolower);
+		std::transform(name.begin(), name.end(), albumNameLowerCase.begin(), ::tolower);
 
-		if(albumType == "album" && albumJson["total_tracks"] == album->songs.size() && albumName.find(albumNameLowerCase) != std::string::npos) {
-			album->imageURL = albumJson["images"][0]["url"].template get<std::string>();
-			album->year = albumJson["release_date"].template get<std::string>();
-			album->year = album->year.substr(0, 4);
-			album->artist = albumJson["artists"][0]["name"].template get<std::string>();
-			album->name = albumJson["name"].template get<std::string>();
+		if(albumType == "album" && albumJson["total_tracks"] == songs.size() && albumName.find(albumNameLowerCase) != std::string::npos) {
+			imageURL = albumJson["images"][0]["url"].template get<std::string>();
+			year = albumJson["release_date"].template get<std::string>();
+			year = year.substr(0, 4);
+			artist = albumJson["artists"][0]["name"].template get<std::string>();
+			name = albumJson["name"].template get<std::string>();
+			std::cout << imageURL << " | " << year << " | " << artist << " | " << name << "\n";
 			return;
 		}
 	}

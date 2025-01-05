@@ -47,6 +47,8 @@ int main() {
 	fs::path musicPath = "/home/tal/Music";
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
+	std::string bearer;
+	std::getline(std::ifstream(".bearer"), bearer);
 
 	cleanLibrary(downloaded, library);
 	deleteUnneeded(downloaded, library, musicPath);
@@ -54,10 +56,11 @@ int main() {
 	uint cleanLibraries = 0;
 
 	for(auto& album: library) {
-		if(album->songs.size() != 0) {
+		if(album->songs.size() == 0) {
 			cleanLibraries++;
 			continue;
 		}
+		album->populateMetadata(bearer.c_str());
 		album->download(musicPath);
 		/* std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n"; */
 	}
