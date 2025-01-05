@@ -85,26 +85,6 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	return songs;
 }
 
-void cleanLibrary(std::vector<Song::Ptr>& songs) {
-	for(auto it = songs.begin(); it != songs.end();) {
-		auto& song = *it;
-		auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& s) -> bool {
-					if(song->isFile())
-					{
-						return std::string(song->name.begin(), song->name.end() - 4) == s->name;
-					}
-					return false;
-				});
-
-		if(found != songs.end()) {
-			songs.erase(found);
-		}
-		else {
-			++it;
-		}
-	}
-}
-
 void cleanLibrary(std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library) {
 	// Loop over the downloaded songs
 	for(auto it = downloaded.begin(); it != downloaded.end(); ++it) {
