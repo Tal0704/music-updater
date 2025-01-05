@@ -71,7 +71,6 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata track='" + std::to_string(song.trackNumber) + "' ";
 	ffmpeg += " -loglevel quiet ";
 	ffmpeg += path + "/" + song.name + ".mp3 ";
-	std::cout << ffmpeg << "\n";
 	return ffmpeg;
 }
 
