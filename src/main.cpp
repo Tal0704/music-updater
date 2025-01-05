@@ -7,19 +7,6 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-/* std::ostream& operator<<(std::ostream& stream, const std::vector<Song::Ptr>& songs) { */
-/* 	std::cout << "Track | Song | Album\t | Artist | Year" << "\n"; */
-/* 	for(auto& song: songs) { */
-/* 		std::cout << std::setw(8) << song->metadata.trackNumber; */
-/* 		std::cout << std::setw(7) << song->name; */
-/* 		std::cout << std::setw(13) << song->metadata.album; */
-/* 		std::cout << std::setw(10) << song->metadata.artist; */
-/* 		std::cout << std::setw(4) << song->metadata.year; */
-/* 		std::cout << "\n"; */
-/* 	} */
-/* 	return stream; */
-/* } */
-
 void testingDownload() {
 	Album::Ptr a = std::make_unique<Album>();
 	Song s("orion", a);
@@ -46,8 +33,11 @@ void testingPopulateAlbumMetadata() {
 	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
 	auto library = getLibrary(libFile);
 
+	std::string bearer;
+	std::getline(std::ifstream(".bearer"), bearer);
+
 	for(auto& album: library) {
-		album->populateMetadata();
+		album->populateMetadata(bearer.c_str());
 		std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n";
 	}
 }
@@ -68,7 +58,6 @@ int main() {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata();
 		album->download(musicPath);
 		/* std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n"; */
 	}

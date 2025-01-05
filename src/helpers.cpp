@@ -137,35 +137,3 @@ void populateAlbum(Album::Ptr& albumToPopulate) {
 	}
 }
 
-/* std::string getSearchTerm(Album* album) { */
-/* 	std::string searchTerm = album->name; */
-/* 	searchTerm += album->artist; */
-/* 	std::replace(searchTerm.begin(), searchTerm.end(), ' ', '+'); */
-/* 	return searchTerm; */
-/* } */
-
-/* void populateMetadata(Album::Ptr& album) { */
-/* 	std::string curlCommand = "curl --request GET --url 'https://api.spotify.com/v1/search?q="; */
-	
-/* 	curlCommand += getSearchTerm(album.get()); */
-/* 	curlCommand += "&type=album' " */
-/*   "--header 'Authorization: Bearer BQDq0MsBXoeYeAwqFxqXmBANETUtwR82H4JwBR1LBBcDlQOGTVnSNNDcr_j49GkK0dLe9kTJivjqmwZ03OHPuFsI8TtdfKrd-UbeXTLa_KvtU0cKwnw' --output data.json"; */
-/* 	/1* system(curlCommand.c_str()); *1/ */
-		 
-/* 	json data = json::parse(std::ifstream("data.json")); */
-
-/* 	for(auto& albumJson: data["albums"]["items"]) { */
-/* 		auto albumType = albumJson["album_type"].template get<std::string>(); */
-/* 		auto albumName = albumJson["name"].template get<std::string>(); */
-/* 		std::transform(albumName.begin(), albumName.end(), albumName.begin(), ::tolower); */
-/* 		/1* std::cout << "album_type: " << albumType << "\ntotal_tracks: " << albumJson["total_tracks"] << "\n" << "album_name: " << (albumName.find(album->name) != std::string::npos) << "\n"; *1/ */
-/* 		if(albumType == "album" && albumJson["total_tracks"] == album->songs.size() && albumName.find(album->name) != std::string::npos) { */
-/* 			album->imageURL = albumJson["images"][0]["url"].template get<std::string>(); */
-/* 			album->year = albumJson["release_date"].template get<std::string>(); */
-/* 			album->year = album->year.substr(0, 5); */
-/* 			album->artist = albumJson["artists"][0]["name"].template get<std::string>(); */
-/* 			album->name = albumJson["name"].template get<std::string>(); */
-/* 		} */
-/* 		return; */
-/* 	} */
-/* } */

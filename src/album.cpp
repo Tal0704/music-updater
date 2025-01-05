@@ -31,13 +31,14 @@ std::string getSearchTerm(const Album& album)
 	return searchTerm;
 }
 
-void Album::populateMetadata() {
+void Album::populateMetadata(const char* bearer) {
 	auto *album = this;
 	std::string curlCommand = "curl --request GET --url 'https://api.spotify.com/v1/search?q=";
 	
 	curlCommand += getSearchTerm(*album);
-	curlCommand += "&type=album' "
-  "--header 'Authorization: Bearer BQApKxThSlaRlC2lvs36cS523NvmVL-dNLi-9GIIgreFX0QUp3G9pZYjhW1aQR0O5fJOtchmgbgcfbVh4QhoojSLIeL9ZrN0xmz_wSr9u8Bp3jLp7TM' --output data.json -s";
+	curlCommand += "&type=album' --header 'Authorization: Bearer ";
+	curlCommand += bearer;
+	curlCommand += "' --output data.json -s";
 	system(curlCommand.c_str());
 		 
 	json data = json::parse(std::ifstream("data.json"));
