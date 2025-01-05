@@ -9,11 +9,11 @@ using json = nlohmann::json;
 
 void testingDownload() {
 	Album::Ptr a = std::make_unique<Album>();
-	Song s("orion", a);
-	s.album->year = "1986";
-	s.album->artist = "Metallica";
-	s.album->name = "Master of Puppets";
-	s.album->imageURL = "https://i.scdn.co/image/ab67616d0000b2731a84d71391df7469c5ab8539";
+	Song s("orion", a.get());
+	/* s.album->year = "1986"; */
+	/* s.album->artist = "Metallica"; */
+	/* s.album->name = "Master of Puppets"; */
+	/* s.album->imageURL = "https://i.scdn.co/image/ab67616d0000b2731a84d71391df7469c5ab8539"; */
 	s.URL = "https://www.youtube.com/watch?v=E0ozmU9cJDg";
 	s.download("/home/tal/Music/t");
 }
@@ -51,7 +51,7 @@ int main() {
 	std::getline(std::ifstream(".bearer"), bearer);
 
 	cleanLibrary(downloaded, library);
-	deleteUnneeded(downloaded, library, musicPath);
+	/* deleteUnneeded(downloaded, library, musicPath); */
 
 	uint cleanLibraries = 0;
 
@@ -61,8 +61,8 @@ int main() {
 			continue;
 		}
 		album->populateMetadata(bearer.c_str());
+		std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n";
 		album->download(musicPath);
-		/* std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n"; */
 	}
 
 	if(cleanLibraries == library.size()) {

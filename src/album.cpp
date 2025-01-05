@@ -57,7 +57,7 @@ void Album::populateMetadata(const char* bearer) {
 			year = year.substr(0, 4);
 			artist = albumJson["artists"][0]["name"].template get<std::string>();
 			name = albumJson["name"].template get<std::string>();
-			std::cout << imageURL << " | " << year << " | " << artist << " | " << name << "\n";
+			/* std::cout << imageURL << " | " << year << " | " << artist << " | " << name << "\n"; */
 			return;
 		}
 	}

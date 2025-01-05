@@ -54,7 +54,7 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 			if(!std::getline(inFile, line)) {
 				break;
 			}
-			Song::Ptr song = std::make_unique<Song>(album);
+			Song::Ptr song = std::make_unique<Song>(album.get());
 			auto songName = getName(line);
 			song->name = songName.value_or("");
 			if(auto URL = getLink(line)) {
@@ -79,7 +79,7 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	for(const auto& pathIt: fs::directory_iterator(path)) {
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		Song::Ptr song = std::make_unique<Song>(placeHolder);
+		Song::Ptr song = std::make_unique<Song>(placeHolder.get());
 		song->name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
 
 		songs.emplace_back(std::move(song));

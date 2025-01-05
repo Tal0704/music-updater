@@ -8,10 +8,10 @@ struct Album;
 
 struct Song 
 {
-	const std::unique_ptr<Album>& album;
+	const Album* album;
 	typedef std::unique_ptr<Song> Ptr;
-	Song(const std::unique_ptr<Album>& album);
-	Song(const std::string& name, const std::unique_ptr<Album>& album);
+	Song(const Album* album);
+	Song(const std::string& name, const Album* album);
 
 	void download(const std::filesystem::path& path);
 	bool isFile();

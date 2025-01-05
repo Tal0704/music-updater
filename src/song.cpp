@@ -5,13 +5,13 @@
 
 namespace fs = std::filesystem;
 
-Song::Song(const std::unique_ptr<Album>& album)
+Song::Song(const Album* album)
 	: album(album)
 {
 
 }
 
-Song::Song(const std::string& name, const std::unique_ptr<Album>& album)
+Song::Song(const std::string& name, const Album* album)
 	:album(album), name(name)
 {
 }
@@ -75,8 +75,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 }
 
 void Song::download(const fs::path& path) {
-	/* exec(yt_dlpCommand(URL, path.c_str())); */
-	std::cout << "curl" << "\n";
+	exec(yt_dlpCommand(URL, path.c_str()));
 	std::cout << album->imageURL << " | " << album->year << " | " << album->artist << " | " << album->name << "\n";
 	exec(cURLCommand(album->imageURL, path.string(), name));
 	exec(ffmpegCommand(path.c_str(), *this));
