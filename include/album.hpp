@@ -19,6 +19,7 @@ struct Album {
 	std::string year;
 	std::string imageURL;
 	std::string artist;
+	uint totalSize;
 };
 
 std::ostream& operator << (std::ostream& stream, const Album& album);

@@ -22,6 +22,8 @@ std::optional<std::string> getLink(const std::string& line) {
 	if(line.length() == 0 || line[0] != '[')
 		return {};
 	int i = 1;
+	while(line[i] != ']' && uint(i) < line.length())
+		i++;
 	while(line[i] != '(' && uint(i) < line.length()) 
 		i++;
 	int j = i;
@@ -66,6 +68,7 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 				album->songs.emplace_back(std::move(song));
 			}
 		}
+		album->totalSize = album->songs.size();
 		albums.emplace_back(std::move(album));
 	}
 
@@ -110,16 +113,30 @@ void cleanLibrary(const std::vector<Song::Ptr>& downloaded, std::vector<Album::P
 
 void deleteUnneeded(const std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const fs::path& path) {
 	std::vector<const Song*> songs;
+	std::vector<const Song*> toDelete;
 	for(auto& album: library) {
 		for(auto& song: album->songs)
 			songs.emplace_back(song.get());
 	}
 	for(auto& downloadedSong: downloaded) {
+		if(!downloadedSong->name.ends_with(".mp3"))
+			continue;
 		auto found = std::find_if(songs.begin(), songs.end(), [&](const Song* song) -> bool {
 					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
 				});
-		if(found == songs.end()) {
-			fs::remove(path.string() + "/" + downloadedSong->name);
+		if(found != songs.end()) {
+			toDelete.emplace_back(downloadedSong.get());
 		}
 	}
+
+	if(toDelete.size() == 0) {
+		std::cout << "No files to delete!\n";
+		return;
+	}
+	std::cout << "Are you sure you want to delete: \n";
+	for(auto& song: toDelete) {
+		std::cout << song->name << "\n";
+	}
+	std::cout << "y/N\n";
+	auto& a = path;
 }
