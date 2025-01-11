@@ -23,7 +23,7 @@ std::string cURLCommand(const std::string& URL, const std::string& path) {
 	curlImage += URL;
 	curlImage += " --output '";
 	curlImage += path;
-	curlImage += "/temp.png'";
+	curlImage += "/temp.png' -s";
 	return curlImage;
 }
 
