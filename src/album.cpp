@@ -75,4 +75,10 @@ void Album::populateMetadata(const char* bearer) {
 			return;
 		}
 	}
+	auto albumJson = data["albums"]["items"][0];
+	imageURL = albumJson["images"][0]["url"].template get<std::string>();
+	year = albumJson["release_date"].template get<std::string>();
+	year = year.substr(0, 4);
+	artist = albumJson["artists"][0]["name"].template get<std::string>();
+	name = albumJson["name"].template get<std::string>();
 }
