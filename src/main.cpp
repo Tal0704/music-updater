@@ -31,7 +31,7 @@ void testingPopulateAlbumMetadata() {
 	}
 }
 
-int main() {
+void run() {
 	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
 	fs::path musicPath = "/home/tal/Desktop/songs";
 	auto downloaded = getDownloaded(musicPath);
@@ -56,6 +56,13 @@ int main() {
 	if(cleanLibraries == library.size()) {
 		std::cout << "No songs to download!\n";
 	}
+}
 
-    return 0;
+void test() {
+
+}
+
+int main() {
+	test();
+	return 0;
 }
