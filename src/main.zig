@@ -1,5 +1,6 @@
 const std = @import("std");
 const music = @import("music.zig");
+const Album = @import("album.zig").Album;
 const print = std.debug.print;
 const fs = std.fs;
 const allocator = std.heap.page_allocator;

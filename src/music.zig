@@ -1,3 +1,15 @@
+const std = @import("std");
+const Song = @import("song.zig").Song;
+const Album = @import("album.zig").Album;
+const ChildProcess = std.process.Child;
+const print = std.debug.print;
+const fs = std.fs;
+const cwd = fs.cwd();
+const ArrayList = std.ArrayList;
+const String = ArrayList(u8);
+const mem = std.mem;
+const expect = std.testing.expect;
+
 pub fn update(file: *fs.File, allocator: mem.Allocator, dir: *fs.Dir, musicPath: []const u8) !void {
     var songs: ArrayList(*Song) = ArrayList(*Song).init(allocator);
     defer songs.deinit();
@@ -15,27 +27,13 @@ fn readFiles(songs: *ArrayList(*Song), musicFolder: *fs.Dir, musicPath: []const 
     defer walker.deinit();
     while (try walker.next()) |file| {
         var song: *Song = try allocator.create(Song);
-        song.* = Song.init(allocator);
+        var album = Album.init(allocator);
+        defer album.deinit();
+        song.* = Song.init(allocator, &album);
 
         try song.name.appendSlice(file.path[0 .. file.path.len - 4]);
-
-        song.isToDelete = isDeleteSong(songs, song);
-        if (song.isToDelete) {
-            song.path = String.init(song.allocator);
-            try song.path.?.appendSlice(musicPath);
-        }
-
-        if (song.isToDelete) {
-            try songs.append(song);
-        } else {
-            for (songs.items) |s| {
-                if (mem.eql(u8, s.name.items, song.name.items)) {
-                    s.isDownloaded = true;
-                }
-            }
-            song.deinit();
-            allocator.destroy(song);
-        }
+        _ = songs;
+        _ = musicPath;
     }
 }
 
@@ -44,13 +42,13 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
     var inStream = buffReader.reader();
     var buf: [1024]u8 = undefined;
 
-    var album: String = String.init(allocator);
-    defer album.deinit();
     while (try inStream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         if (line.len == 0 or line[0] == '-') continue;
 
         var song: *Song = try allocator.create(Song);
-        song.* = Song.init(allocator);
+        var album = Album.init(allocator);
+        defer album.deinit();
+        song.* = Song.init(allocator, &album);
 
         if (getName(line)) |name| {
             try song.name.appendSlice(name);
@@ -58,21 +56,6 @@ fn readLibrary(songs: *ArrayList(*Song), file: *fs.File, allocator: std.mem.Allo
             song.deinit();
             allocator.destroy(song);
             continue;
-        }
-
-        if (getAlbum(line)) |a| {
-            album.clearRetainingCapacity();
-            try album.appendSlice(a);
-        }
-
-        if (album.items.len > 0) {
-            song.metadata.album = String.init(song.allocator);
-            try song.metadata.album.?.appendSlice(album.items);
-        }
-
-        if (getURL(line)) |URL| {
-            song.URL = String.init(song.allocator);
-            try song.URL.?.appendSlice(URL);
         }
 
         try songs.append(song);
@@ -89,22 +72,7 @@ fn isDeleteSong(songs: *ArrayList(*Song), song: *Song) bool {
 }
 
 fn deleteSongs(songs: *ArrayList(*Song)) !void {
-    var count: usize = 0;
-    for (songs.items) |song| {
-        if (song.isToDelete) count += 1;
-    }
-    if (count == 0) {
-        print("No songs to delete :D\n", .{});
-        return;
-    }
-
     print("Are you sure you want to delete:\n", .{});
-    for (songs.items) |song| {
-        if (song.isToDelete) {
-            print("{s}\n", .{song.name.items});
-        }
-    }
-
     print("y/N\n", .{});
 
     var buff: [10]u8 = undefined;
@@ -115,38 +83,12 @@ fn deleteSongs(songs: *ArrayList(*Song)) !void {
         print("Not deleteing!\n", .{});
         return;
     }
-
-    for (songs.items) |song| {
-        if (song.isToDelete) {
-            song.delete() catch |err| switch (err) {
-                error.PathNotFound => print("Couldn't find path for {s}\n", .{song.name.items}),
-                else => print("Couldn't delete file: {s}, {}\n", .{ song.name.items, err }),
-            };
-        }
-    }
+    _ = songs;
 }
 
 fn downloadSongs(songs: *ArrayList(*Song), dir: []const u8) void {
-    var count: usize = 0;
-    for (songs.items) |song| {
-        if (!song.isDownloaded)
-            count += 1;
-    }
-    if (count == 0) {
-        print("No songs to download!\n", .{});
-        return;
-    }
-
-    print("Downloading songs...\n", .{});
-    for (songs.items) |song| {
-        if (!song.isToDelete) {
-            if (song.download(dir)) {
-                print("Downloaded {s} succefully!\n", .{song.name.items});
-            } else |err| {
-                print("Couldn't download {s}: {}\n", .{ song.name.items, err });
-            }
-        }
-    }
+    _ = songs;
+    _ = dir;
 }
 
 fn getName(line: []const u8) ?[]const u8 {
@@ -285,15 +227,3 @@ test "read library" {
         std.testing.allocator.destroy(songs.items[i]);
     }
 }
-
-const std = @import("std");
-const Metadata = @import("metadata.zig").Metadata;
-const Song = @import("song.zig").Song;
-const ChildProcess = std.process.Child;
-const print = std.debug.print;
-const fs = std.fs;
-const cwd = fs.cwd();
-const ArrayList = std.ArrayList;
-const String = ArrayList(u8);
-const mem = std.mem;
-const expect = std.testing.expect;

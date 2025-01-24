@@ -1,32 +1,23 @@
+const std = @import("std");
+const Album = @import("album.zig").Album;
+const ChildProcess = std.process.Child;
+const mem = std.mem;
+const gprint = std.debug.print;
+const fs = std.fs;
+const String = std.ArrayList(u8);
+
 pub const Song = struct {
     name: String,
-    URL: ?String,
-    path: ?String,
-    metadata: Metadata,
-    isDownloaded: bool,
-    isToDelete: bool,
-    allocator: std.mem.Allocator,
+    father: *Album,
 
     pub fn deinit(self: @This()) void {
         self.name.deinit();
-        self.metadata.deinit();
-        if (self.URL) |URL| {
-            URL.deinit();
-        }
-        if (self.path) |path| {
-            path.deinit();
-        }
     }
 
-    pub fn init(allocator: mem.Allocator) Song {
+    pub fn init(allocator: mem.Allocator, father: *Album) Song {
         return @This(){
             .name = String.init(allocator),
-            .URL = null,
-            .path = null,
-            .metadata = Metadata.init(),
-            .isToDelete = false,
-            .isDownloaded = false,
-            .allocator = allocator,
+            .father = father,
         };
     }
 
@@ -71,11 +62,3 @@ pub const Song = struct {
         }
     }
 };
-
-const std = @import("std");
-const Metadata = @import("metadata.zig").Metadata;
-const ChildProcess = std.process.Child;
-const mem = std.mem;
-const gprint = std.debug.print;
-const fs = std.fs;
-const String = std.ArrayList(u8);
