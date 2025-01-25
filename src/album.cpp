@@ -44,39 +44,46 @@ std::string getSearchTerm(const Album& album)
 	return searchTerm;
 }
 
-void Album::populateMetadata(const char* bearer) {
-	std::string curlCommand = "curl --request GET --url 'https://api.spotify.com/v1/search?q=";
-	
-	curlCommand += getSearchTerm(*this);
-	curlCommand += "&type=album' --header 'Authorization: Bearer ";
-	curlCommand += bearer;
-	curlCommand += "' --output data.json -s";
+std::string convertToUri(const char* str) {
+	std::string uri = str;
+	for(uint i = 0; i < uri.length(); i++) {
+		if(uri[i] == ' ') {
+			uri[i] = '%';
+			uri.insert(i, 1, '2');
+			uri.insert(i, 1, '0');
+		}
+	}
+	return uri;
+}
+
+void Album::populateMetadata() {
+	std::string curlCommand = "curl -s --request GET --url \"https://musicbrainz.org/ws/2/release/?query=artist:";
+	curlCommand += convertToUri(artist.c_str());
+	curlCommand += "%20AND%20release:";
+	curlCommand += convertToUri(name.c_str());
+	curlCommand += "&fmt=json\" > data.json";
 	system(curlCommand.c_str());
 
 	json data = json::parse(std::ifstream("data.json"));
-	/* std::cout << data << "\n"; */
+		
+	json* correctAlbum = &data["releases"][0];
+	for(auto& release: data["releases"]) {
+		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
+		if(correctRawDate == "") 
+			continue;
+		int correctYear = std::stoi(correctRawDate.substr(0, 4));
 
-	for(auto& albumJson: data["albums"]["items"]) {
-		auto albumType = albumJson["album_type"].template get<std::string>();
-		auto albumName = albumJson["name"].template get<std::string>();
-		std::transform(albumName.begin(), albumName.end(), albumName.begin(), ::tolower);
+		std::string currentRawDate = release.at("date").template get<std::string>();
+		if(currentRawDate == "") 
+			continue;
+		int currentYear = std::stoi(currentRawDate.substr(0, 4));
 
-		std::string albumNameLowerCase = "";
-		std::transform(name.begin(), name.end(), albumNameLowerCase.begin(), ::tolower);
-
-		/* std::cout << albumType << " | " << albumName << " | "  << songs.size() << "\n"; */
-		if(albumType == "album" && albumJson["total_tracks"] == totalSize && albumName.find(albumNameLowerCase) != std::string::npos) {
-			imageURL = albumJson["images"][0]["url"].template get<std::string>();
-			year = albumJson["release_date"].template get<std::string>();
-			year = year.substr(0, 4);
-			artist = albumJson["artists"][0]["name"].template get<std::string>();
-			name = albumJson["name"].template get<std::string>();
-			/* std::cout << imageURL << " | " << year << " | " << artist << " | " << name << "\n"; */
-			return;
+		if(currentYear < correctYear) {
+			correctAlbum = &release;
 		}
 	}
-	auto albumJson = data["albums"]["items"][0];
-	imageURL = albumJson["images"][0]["url"].template get<std::string>();
+
+	std::string albumID = (*correctAlbum)["id"];
 	year = albumJson["release_date"].template get<std::string>();
 	year = year.substr(0, 4);
 	artist = albumJson["artists"][0]["name"].template get<std::string>();

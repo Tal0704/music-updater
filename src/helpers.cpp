@@ -40,12 +40,23 @@ std::optional<std::string> getAlbum(const std::string& line) {
 	return std::string(line.begin() + 3, line.end());
 }
 
+std::optional<std::string> getArtist(const std::string& line) {
+	if(line.length() == 0 || line.substr(0, 2) != "# ")
+		return {};
+
+	return line.substr(2, line.size() - 1);
+}
+
 std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
+	std::string artist;
 	std::vector<Album::Ptr> albums;
 	while(std::getline(inFile, line)) {
 		Album::Ptr album = std::make_unique<Album>();
 		auto albumName = getAlbum(line);
+		if(auto temp = getArtist(line)) {
+			artist = temp.value();
+		}
 		if(!albumName.has_value()) {
 			continue;
 		}
@@ -69,6 +80,9 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 			}
 		}
 		album->totalSize = album->songs.size();
+		if(artist != "") {
+			album->artist = artist;
+		}
 		albums.emplace_back(std::move(album));
 	}
 

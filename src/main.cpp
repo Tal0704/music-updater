@@ -22,22 +22,17 @@ void testingPopulateAlbumMetadata() {
 	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
 	auto library = getLibrary(libFile);
 
-	std::string bearer;
-	std::getline(std::ifstream(".bearer"), bearer);
-
 	for(auto& album: library) {
-		album->populateMetadata(bearer.c_str());
+		album->populateMetadata();
 		std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n";
 	}
 }
 
 void run() {
-	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
+	std::ifstream libFile("/home/tal/Documents/notes/music/music.md");
 	fs::path musicPath = "/home/tal/Desktop/songs";
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
-	std::string bearer;
-	std::getline(std::ifstream(".bearer"), bearer);
 
 	cleanLibrary(downloaded, library);
 	deleteUnneeded(downloaded, library, musicPath);
@@ -49,7 +44,7 @@ void run() {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata(bearer.c_str());
+		album->populateMetadata();
 		album->download(musicPath);
 	}
 
@@ -63,6 +58,6 @@ void test() {
 }
 
 int main() {
-	test();
+	run();
 	return 0;
 }
