@@ -65,7 +65,7 @@ void Album::populateMetadata() {
 	system(curlCommand.c_str());
 
 	json data = json::parse(std::ifstream("data.json"));
-		
+
 	json* correctAlbum = &data["releases"][0];
 	for(auto& release: data["releases"]) {
 		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
@@ -83,9 +83,12 @@ void Album::populateMetadata() {
 		}
 	}
 
-	std::string albumID = (*correctAlbum)["id"];
-	year = albumJson["release_date"].template get<std::string>();
+	auto& album = *correctAlbum;
+	std::string albumID = album["id"].template get<std::string>();
+	year = album["date"].template get<std::string>().substr(0, 4);
 	year = year.substr(0, 4);
-	artist = albumJson["artists"][0]["name"].template get<std::string>();
-	name = albumJson["name"].template get<std::string>();
+	artist = album["artist-credit"][0]["name"].template get<std::string>();
+	std::string getImageData = "curl -L --request GET --url https://coverartarchive.org/release/264b958d-e9fd-4cde-9759-e9d40df12a94/front --output a.jpg";
+	system(getImageData.c_str());
+	std::cout << "here" << "\n";
 }
