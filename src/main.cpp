@@ -1,4 +1,5 @@
 #include <helpers.hpp>
+#include <exec.hpp>
 #include <song.hpp>
 #include <fstream>
 #include <json.hpp>
@@ -18,16 +19,6 @@ void testingunneeded() {
 
 }
 
-void testingPopulateAlbumMetadata() {
-	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
-	auto library = getLibrary(libFile);
-
-	for(auto& album: library) {
-		album->populateMetadata();
-		std::cout << album->name << " | " << album->year << " | " << album->imageURL <<" | " << album->artist << "\n";
-	}
-}
-
 void run() {
 	std::ifstream libFile("/home/tal/Documents/notes/music/music.md");
 	fs::path musicPath = "/home/tal/Desktop/songs";
@@ -44,7 +35,7 @@ void run() {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata();
+		album->populateMetadata(musicPath);
 		album->download(musicPath);
 	}
 
@@ -54,7 +45,11 @@ void run() {
 }
 
 void test() {
-
+	std::string getImageData = "curl -L --request GET --url https://coverartarchive.org/release/264b958d-e9fd-4cde-9759-e9d40df12a94/front --output";
+	auto res = exec(getImageData);
+	std::ofstream file;
+	file.open("a.jpg");
+	file << res;
 }
 
 int main() {

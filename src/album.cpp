@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include <iostream>
 #include <exec.hpp>
+#include <string>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -19,21 +20,22 @@ Album::Album(const std::string& name)
 }
 
 std::string cURLCommand(const std::string& URL, const std::string& path) {
-	std::string curlImage("curl ");
+	std::string curlImage("curl -s -L --request GET --url https://coverartarchive.org/release/");
 	curlImage += URL;
-	curlImage += " --output '";
+	curlImage += "/front";
+	curlImage += " --output \"";
 	curlImage += path;
-	curlImage += "/temp.png' -s";
+	curlImage += "/temp.jpg\"";
 	return curlImage;
 }
 
 void Album::download(const std::filesystem::path& path) {
+	exec(cURLCommand(imageURL, path.string()));
 	for(auto& song: songs) {
 		std::cout << "Downloading: " << this->name << " - " << song->name << "...\n";
-		exec(cURLCommand(imageURL, path.string()));
 		song->download(path);
-		fs::remove(path.string() + "/temp.png");
 	}
+	fs::remove(path.string() + "/temp.jpg");
 }
 
 std::string getSearchTerm(const Album& album)
@@ -49,37 +51,64 @@ std::string convertToUri(const char* str) {
 	for(uint i = 0; i < uri.length(); i++) {
 		if(uri[i] == ' ') {
 			uri[i] = '%';
-			uri.insert(i, 1, '2');
-			uri.insert(i, 1, '0');
+			uri.insert(i + 1, 1, '0');
+			uri.insert(i + 1, 1, '2');
 		}
 	}
 	return uri;
 }
 
-void Album::populateMetadata() {
+float calcPercent(float value, uint total) {
+	return value / total;
+}
+
+float precentAccurate(const std::string& left, const std::string& right) {
+	uint totalAccurate = 0;
+	uint i = 0;
+	for(i = 0; i < std::max(left.size(), right.size()); i++) {
+		if(i >= left.size() || i >= right.size()) {
+			return calcPercent(totalAccurate, i);
+		}
+	}
+	return calcPercent(totalAccurate, i);
+}
+
+void Album::populateMetadata(const std::filesystem::path& path) {
 	std::string curlCommand = "curl -s --request GET --url \"https://musicbrainz.org/ws/2/release/?query=artist:";
 	curlCommand += convertToUri(artist.c_str());
 	curlCommand += "%20AND%20release:";
 	curlCommand += convertToUri(name.c_str());
 	curlCommand += "&fmt=json\" > data.json";
-	system(curlCommand.c_str());
+	exec(curlCommand);
 
 	json data = json::parse(std::ifstream("data.json"));
 
 	json* correctAlbum = &data["releases"][0];
 	for(auto& release: data["releases"]) {
-		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
-		if(correctRawDate == "") 
+		std::string correctRawData = correctAlbum->at("date").template get<std::string>();
+		if(correctRawData == "") 
 			continue;
-		int correctYear = std::stoi(correctRawDate.substr(0, 4));
 
-		std::string currentRawDate = release.at("date").template get<std::string>();
-		if(currentRawDate == "") 
+		int correctYear = std::stoi(correctRawData.substr(0, 4));
+		try {
+			std::string currentRawDate = release.at("date").template get<std::string>();
+
+			if(currentRawDate == "") 
+				continue;
+
+			/* std::cout << "size: " << std::filesystem::file_size(path.string() + "/temp.jpg") << "\n"; */
+			if(std::filesystem::file_size(path.string() + "/temp.jpg") <= 1000) {
+				continue;
+			}
+			std::cout << "after\n";
+			int currentYear = std::stoi(currentRawDate.substr(0, 4));
+
+			if(currentYear < correctYear) {
+				correctAlbum = &release;
+			}
+		}
+		catch (...) {
 			continue;
-		int currentYear = std::stoi(currentRawDate.substr(0, 4));
-
-		if(currentYear < correctYear) {
-			correctAlbum = &release;
 		}
 	}
 
@@ -88,7 +117,6 @@ void Album::populateMetadata() {
 	year = album["date"].template get<std::string>().substr(0, 4);
 	year = year.substr(0, 4);
 	artist = album["artist-credit"][0]["name"].template get<std::string>();
-	std::string getImageData = "curl -L --request GET --url https://coverartarchive.org/release/264b958d-e9fd-4cde-9759-e9d40df12a94/front --output a.jpg";
-	system(getImageData.c_str());
-	std::cout << "here" << "\n";
+	imageURL = album["id"];
+	name = album["title"];
 }
