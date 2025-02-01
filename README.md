@@ -23,3 +23,7 @@ The program will download the link to the album cover in to the download directo
 [curl](https://github.com/curl/curl)  
 [FFmpeg](https://github.com/FFmpeg/FFmpeg)  
 [yt-dlp](https://github.com/yt-dlp/yt-dlp)  
+
+
+# TODO:
+Remove unneeded files

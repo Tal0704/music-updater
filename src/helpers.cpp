@@ -175,5 +175,13 @@ void deleteUnneeded(const std::vector<Song::Ptr>& downloaded, std::vector<Album:
 		std::cout << song->name << "\n";
 	}
 	std::cout << "y/N\n";
-	auto& a = path;
+	std::string answer;
+	std::getline(std::cin, answer);
+	if(answer == "y" || answer == "Y") {
+		for(auto& song: toDelete) {
+			auto toRemove = "\"" + path.string() + "/" + song->name + "\"";
+			fs::remove(toRemove);
+			std::cout << "Deleteing: " << toRemove << "\n";
+		}
+	}
 }
