@@ -33,6 +33,7 @@ void Album::download(const std::filesystem::path& path) {
 		std::cout << "Downloading: " << this->name << " - " << song->name << "...\n";
 		song->download(path);
 	}
+	std::cout << "\n";
 	fs::remove(path.string() + "/temp.jpg");
 }
 
@@ -84,10 +85,16 @@ void Album::populateMetadata() {
 	curlCommand += "&fmt=json\"";
 	json data = json::parse(exec(curlCommand));
 
+
 	json* correctAlbum = &data["releases"][0];
+	for(int i = 0; !correctAlbum->contains("date"); i++) {
+		correctAlbum = &data["releases"][i++];
+	}
 
 	for(auto& release: data["releases"]) {
 		if(release["score"] <= 60)
+			continue;
+		if(!release.contains("date"))
 			continue;
 		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
 		if(correctRawDate == "") 
