@@ -26,9 +26,9 @@ bool Song::isFile() {
 }
 
 std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
-	std::string yt_dlp("yt-dlp -x --audio-format mp3 ");
+	std::string yt_dlp("yt-dlp -x --audio-format mp3 \"");
 	yt_dlp += URL;
-	yt_dlp += " -P ";
+	yt_dlp += "\" -P ";
 	yt_dlp += path;
 	yt_dlp += " -o temp -q --cookies-from-browser firefox";
 	return yt_dlp;

@@ -12,7 +12,7 @@ struct Album {
 	Album(const std::string& name);
 
 	void download(const std::filesystem::path& path);
-	void populateMetadata(const std::filesystem::path& path);
+	void populateMetadata();
 
 	std::vector<std::unique_ptr<Song>> songs;
 	std::string name;

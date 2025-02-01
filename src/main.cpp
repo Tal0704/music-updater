@@ -19,9 +19,8 @@ void testingunneeded() {
 
 }
 
-void run() {
-	std::ifstream libFile("/home/tal/Documents/notes/music/music.md");
-	fs::path musicPath = "/home/tal/Desktop/songs";
+void run(const fs::path& musicPath, const std::string& libPath) {
+	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
@@ -35,7 +34,7 @@ void run() {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata(musicPath);
+		album->populateMetadata();
 		album->download(musicPath);
 	}
 
@@ -44,15 +43,11 @@ void run() {
 	}
 }
 
-void test() {
-	std::string getImageData = "curl -L --request GET --url https://coverartarchive.org/release/264b958d-e9fd-4cde-9759-e9d40df12a94/front --output";
-	auto res = exec(getImageData);
-	std::ofstream file;
-	file.open("a.jpg");
-	file << res;
+void test(const fs::path& musicPath, const std::string& libPath) {
+	std::cout << musicPath << ", " << libPath << "\n";
 }
 
-int main() {
-	run();
+int main(int argc, char** argv) {
+	run(argv[1], argv[2]);
 	return 0;
 }

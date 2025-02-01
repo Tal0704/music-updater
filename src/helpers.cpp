@@ -18,6 +18,21 @@ std::optional<std::string> getName(const std::string& line) {
 	return std::string(line.begin() + 1, line.begin() + i);
 }
 
+std::optional<std::string> getThumbnail(const std::string& line) {
+	if(line.length() == 0 || line.substr(0, 4) != "## [")
+		return {};
+	int i = 1;
+	while(line[i] != ']' && uint(i) < line.length())
+		i++;
+	while(line[i] != '(' && uint(i) < line.length()) 
+		i++;
+	int j = i;
+	while (line[j] != ')' && uint(i) < line.length())
+		j++;
+
+	return std::string(line.begin() + i + 1, line.begin() + j);
+}
+
 std::optional<std::string> getLink(const std::string& line) {
 	if(line.length() == 0 || line[0] != '[')
 		return {};
@@ -37,7 +52,10 @@ std::optional<std::string> getAlbum(const std::string& line) {
 	if(line.length() == 0 || !line.starts_with("## "))
 		return {};
 
-	return std::string(line.begin() + 3, line.end());
+	int i = 4;
+	while(line[i] != ']' && uint(i) < line.length())
+		i++;
+	return std::string(line.begin() + 4, line.begin() + i);
 }
 
 std::optional<std::string> getArtist(const std::string& line) {
@@ -62,11 +80,16 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 		}
 		album->name = albumName.value();
 
+		if(auto thumbnail = getThumbnail(line)) {
+			album->imageURL = thumbnail.value();
+		}
+
 		int i = 1;
 		while(line != "") {
 			if(!std::getline(inFile, line)) {
 				break;
 			}
+
 			Song::Ptr song = std::make_unique<Song>(album.get());
 			auto songName = getName(line);
 			song->name = songName.value_or("");
