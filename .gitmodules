@@ -4,3 +4,6 @@
 [submodule "libs/curlpp"]
 	path = libs/curlpp
 	url = https://github.com/jpbarrette/curlpp.git
+[submodule "utfcpp"]
+	path = utfcpp
+	url = https://github.com/nemtrif/utfcpp
