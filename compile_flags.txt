@@ -6,6 +6,6 @@ c++
 -Werror
 -Iinclude
 -Ilibs/json/single_include/nlohmann
--Ilibs/curlpp/
+-Ilibs/utfcpp/source
 -Wno-unused-paramater
 -Wno-unused-variable

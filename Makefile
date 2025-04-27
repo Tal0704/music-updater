@@ -18,7 +18,7 @@ SRCS := $(sort $(shell find $(SRC_DIR) -name '*.cpp'))
 
 # Includes
 INCLUDE_DIR = include
-INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann -Ilibs/CLI11/include
+INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann -Ilibs/utfcpp/source
 
 # C preprocessor settings
 CPPFLAGS = $(INCLUDES) -MMD -MP
@@ -32,7 +32,7 @@ WARNINGS = -Wall -Wpedantic -Wextra -Wno-unused-parameter
 LDFLAGS = 
 
 # Libraries to link
-LDLIBS =
+LDLIBS = -l curl
 
 # Target OS detection
 ifeq ($(OS),Windows_NT) # OS is a preexisting environment variable on Windows
@@ -170,7 +170,7 @@ install: all copyassets
 .PHONY: run
 run: all
 	@echo "Starting program: $(BIN_DIR)/$(EXEC)"
-	@cd ./$(BIN_DIR); ./$(EXEC)
+	@cd ./$(BIN_DIR); ./$(EXEC) ~/Music ~/Documents/notes/music/music.md
 
 # Copy assets to bin directory for selected platform
 .PHONY: copyassets
