@@ -13,11 +13,6 @@ Song::Song(const std::string& name, const Album* album, Status status)
 	:album(album), name(name), status(status)
 { }
 
-std::ostream& operator << (std::ostream& stream, const Song& song) {
-	stream << song.name;
-	return stream;
-}
-
 bool Song::isFile() {
 	return std::string(name.end() - 4, name.end() - 1) == ".mp";
 }
@@ -42,6 +37,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata artist=\"" + song.album->artist + "\" ";
 	ffmpeg += "-metadata track=\"" + std::to_string(song.trackNumber) + "\" ";
 	ffmpeg += " -loglevel quiet \"";
+	ffmpeg += "-metadata title=\"" + song.name +"\" ";
 	ffmpeg += path + "/" + song.name + ".mp3\" ";
 	return ffmpeg;
 }
@@ -50,4 +46,24 @@ void Song::download(const fs::path& path) {
 	exec(yt_dlpCommand(URL, path.c_str()));
 	exec(ffmpegCommand(path, *this));
 	fs::remove(path.string() + "/temp.mp3");
+}
+
+std::ostream& operator << (std::ostream& stream, const Song::Status& status) {
+	using Status = Song::Status;
+	switch (status) {
+		case Status::InBoth:
+			stream << "In Both";
+			break;
+		case Status::Downloaded:
+			stream << "Downloaded";
+			break;
+		case Status::Library:
+			stream << "Library";
+			break;
+		default:
+			break;
+	}
+	if(status == Status::InBoth) {
+	}
+	return stream;
 }

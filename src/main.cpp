@@ -14,7 +14,7 @@ void testingunneeded() {
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
-	cleanLibrary(downloaded, library);
+	organizeSongs(library, downloaded);
 	deleteUnneeded(downloaded, library, musicPath);
 
 }
@@ -24,7 +24,16 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
-	cleanLibrary(downloaded, library);
+	organizeSongs(library, downloaded);
+
+	std::ofstream o("test.txt");
+	for(const auto& album: library) {
+		for(const auto& song: album->songs) {
+			o << song->name << " | "<< song->status << "\n";
+		}
+	}
+
+	return;
 	deleteUnneeded(downloaded, library, musicPath);
 
 	uint cleanLibraries = 0;

@@ -1,4 +1,5 @@
 #include <helpers.hpp>
+#include <memory>
 #include <song.hpp>
 #include <algorithm>
 #include <json.hpp>
@@ -120,7 +121,7 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	for(const auto& pathIt: fs::directory_iterator(path)) {
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		Song::Ptr song = std::make_unique<Song>(placeHolder.get());
+		Song::Ptr song = std::make_unique<Song>(placeHolder.get(), Song::Status::Downloaded);
 		song->name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
 
 		songs.emplace_back(std::move(song));
@@ -129,7 +130,8 @@ std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	return songs;
 }
 
-void cleanLibrary(const std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library) {
+// TODO: If found song that is not in the library (I.E found == songs.end()) push it to the library with status Downloaded
+void organizeSongs(std::vector<Album::Ptr>& library, std::vector<Song::Ptr>& downloaded) {
 	// Loop over the downloaded songs
 	for(auto it = downloaded.begin(); it != downloaded.end(); ++it) {
 		auto& downloadedSong = *it;
@@ -140,10 +142,8 @@ void cleanLibrary(const std::vector<Song::Ptr>& downloaded, std::vector<Album::P
 			auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
 					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
 					});
-			// If not found any song, delete it. Else erase it from the library
 			if(found != songs.end()) {
-				songs.erase(found);
-				break;
+				found->get()->status = Song::Status::InBoth;
 			}
 		}
 	}
