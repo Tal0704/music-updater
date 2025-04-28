@@ -72,11 +72,6 @@ float precentAccurate(const std::string& left, const std::string& right) {
 	return calcPercent(totalAccurate, i);
 }
 
-bool isIDhasThumbnail(const std::string& id) {
-	auto a = (exec(std::string("curl -o /dev/null -s -w \"%{http_code}\n\" -L https://coverartarchive.org/release/") + id + "/front")) == "200\n";
-	return a;
-}
-
 void Album::populateMetadata() {
 	std::string curlCommand = "curl -s --request GET --url \"https://musicbrainz.org/ws/2/release/?query=artist:";
 	curlCommand += convertToUri(artist.c_str());
@@ -122,6 +117,4 @@ void Album::populateMetadata() {
 	std::string albumID = album["id"].template get<std::string>();
 	year = album["date"].template get<std::string>().substr(0, 4);
 	year = year.substr(0, 4);
-	artist = album["artist-credit"][0]["name"].template get<std::string>();
-	name = album["title"];
 }

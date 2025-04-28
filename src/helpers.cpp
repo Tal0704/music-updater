@@ -5,12 +5,13 @@
 #include <filesystem>
 #include <string>
 #include <iostream>
+#include <cassert>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 std::optional<std::string> getName(const std::string& line) {
-	if(line.length() == 0 || line[0] != '[')
+	if(line.length() == 0 || !line.starts_with('['))
 		return {};
 	int i = 1;
 	while(line[i] != ']' && uint(i) < line.length()) 
@@ -19,7 +20,7 @@ std::optional<std::string> getName(const std::string& line) {
 }
 
 std::optional<std::string> getThumbnail(const std::string& line) {
-	if(line.length() == 0 || line.substr(0, 4) != "## [")
+	if(line.length() == 0 || !line.starts_with("## !["))
 		return {};
 	int i = 1;
 	while(line[i] != ']' && uint(i) < line.length())
@@ -34,7 +35,7 @@ std::optional<std::string> getThumbnail(const std::string& line) {
 }
 
 std::optional<std::string> getLink(const std::string& line) {
-	if(line.length() == 0 || line[0] != '[')
+	if(line.length() == 0 || !line.starts_with('['))
 		return {};
 	int i = 1;
 	while(line[i] != ']' && uint(i) < line.length())
@@ -52,14 +53,14 @@ std::optional<std::string> getAlbum(const std::string& line) {
 	if(line.length() == 0 || !line.starts_with("## "))
 		return {};
 
-	int i = 4;
+	int i = 5;
 	while(line[i] != ']' && uint(i) < line.length())
 		i++;
-	return std::string(line.begin() + 4, line.begin() + i);
+	return std::string(line.begin() + 5, line.begin() + i);
 }
 
 std::optional<std::string> getArtist(const std::string& line) {
-	if(line.length() == 0 || line.substr(0, 2) != "# ")
+	if(line.length() == 0 || !line.starts_with("# "))
 		return {};
 
 	return line.substr(2, line.size() - 1);
@@ -69,20 +70,23 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
 	std::string artist;
 	std::vector<Album::Ptr> albums;
+
 	while(std::getline(inFile, line)) {
 		Album::Ptr album = std::make_unique<Album>();
 		auto albumName = getAlbum(line);
 		if(auto temp = getArtist(line)) {
 			artist = temp.value();
-		}
+		} 
 		if(!albumName.has_value()) {
 			continue;
 		}
 		album->name = albumName.value();
+		album->artist = artist;
 
 		if(auto thumbnail = getThumbnail(line)) {
 			album->imageURL = thumbnail.value();
 		}
+		assert(!((album->imageURL.length() != 0) ^ (album->artist.length() != 0)));
 
 		int i = 1;
 		while(line != "") {
@@ -103,9 +107,6 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 			}
 		}
 		album->totalSize = album->songs.size();
-		if(artist != "") {
-			album->artist = artist;
-		}
 		albums.emplace_back(std::move(album));
 	}
 
@@ -115,7 +116,7 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
 	std::vector<Song::Ptr> songs;
 	Album::Ptr placeHolder;
-	
+
 	for(const auto& pathIt: fs::directory_iterator(path)) {
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
@@ -137,7 +138,7 @@ void cleanLibrary(const std::vector<Song::Ptr>& downloaded, std::vector<Album::P
 			auto& songs = album->songs;
 			// For every album find the song that is in library and is already downloaded
 			auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
-						return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
+					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
 					});
 			// If not found any song, delete it. Else erase it from the library
 			if(found != songs.end()) {
@@ -159,7 +160,7 @@ void deleteUnneeded(const std::vector<Song::Ptr>& downloaded, std::vector<Album:
 		if(!downloadedSong->name.ends_with(".mp3"))
 			continue;
 		auto found = std::find_if(songs.begin(), songs.end(), [&](const Song* song) -> bool {
-					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
+				return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
 				});
 		if(found != songs.end()) {
 			toDelete.emplace_back(downloadedSong.get());

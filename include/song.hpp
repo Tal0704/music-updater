@@ -8,10 +8,17 @@ struct Album;
 
 struct Song 
 {
-	const Album* album;
 	typedef std::unique_ptr<Song> Ptr;
-	Song(const Album* album);
-	Song(const std::string& name, const Album* album);
+
+	enum Status {
+		InBoth,
+		Downloaded,
+		Library,
+	};
+
+	const Album* album;
+	Song(const Album* album, Status status = Status::InBoth);
+	Song(const std::string& name, const Album* album, Status status = Status::InBoth);
 
 	void download(const std::filesystem::path& path);
 	bool isFile();
@@ -19,6 +26,7 @@ struct Song
     std::string name;
     std::string URL;
 	int trackNumber;
+	Status status;
 };
 
 std::ostream& operator << (std::ostream& stream, const Song& song);

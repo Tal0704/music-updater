@@ -5,16 +5,13 @@
 
 namespace fs = std::filesystem;
 
-Song::Song(const Album* album)
-	: album(album)
-{
+Song::Song(const Album* album, Status status)
+	: album(album), status(status)
+{ }
 
-}
-
-Song::Song(const std::string& name, const Album* album)
-	:album(album), name(name)
-{
-}
+Song::Song(const std::string& name, const Album* album, Status status)
+	:album(album), name(name), status(status)
+{ }
 
 std::ostream& operator << (std::ostream& stream, const Song& song) {
 	stream << song.name;
