@@ -19,6 +19,7 @@ struct Album {
 	std::string year;
 	std::string imageURL;
 	std::string artist;
+	std::string genre;
 	uint totalSize;
 };
 

@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include <album.hpp>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -145,7 +146,7 @@ void organizeSongs(std::vector<Album::Ptr>& library, std::vector<Album::Ptr>& do
 		auto found = false;
 		for(auto& song: librarySongs) {
 			auto& name = downloadedSong->name;
-			if (song->name == name.substr(0, name.size() - 4)) {
+			if (androidify(song->name) == name.substr(0, name.size() - 4)) {
 				found = true;
 				song->status = Song::Status::InBoth;
 			}
@@ -204,4 +205,21 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 					return song->status == Song::Status::Downloaded;
 				});
 	}
+}
+
+std::string androidify(const std::string& string) {
+	std::string ret = string;
+	for(auto& c: ret) {
+		switch (c) {
+			case '*':
+				c = '+';
+				break;
+			case '?':
+				c = '_';
+				break;
+			default:
+				;
+		}
+	}
+	return ret;
 }

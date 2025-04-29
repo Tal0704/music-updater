@@ -4,6 +4,7 @@
 #include <album.hpp>
 #include <exec.hpp>
 #include <string>
+#include <helpers.hpp>
 
 namespace fs = std::filesystem;
 
@@ -15,17 +16,6 @@ Song::Song(const std::string& name, Album::Ptr album, Status status)
 	:album(album), status(status), name(name)
 { }
 
-char androidify(char c) {
-	switch (c) {
-		case '*':
-		return '+';
-		case '?':
-		return '_';
-		default:
-		return c;
-	}
-}
-
 std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
 	std::string yt_dlp("yt-dlp -x --audio-format mp3 \"");
 	yt_dlp += URL;
@@ -35,13 +25,10 @@ std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
 	return yt_dlp;
 }
 
-
 std::string ffmpegCommand(const std::string& path, const Song& song) {
 	std::string ffmpeg("ffmpeg -y -i \"");
 	std::string songName = song.name;
-	for(char& c: songName) {
-		c = androidify(c);
-	}
+	androidify(songName);
 
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
 	ffmpeg += path + "/temp.jpg\" ";

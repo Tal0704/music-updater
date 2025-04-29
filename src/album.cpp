@@ -1,9 +1,12 @@
 #include <album.hpp>
+#include <fstream>
 #include <song.hpp>
 #include <json.hpp>
 #include <iostream>
 #include <exec.hpp>
 #include <string>
+#include <https.hpp>
+#include <format>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -72,14 +75,28 @@ float precentAccurate(const std::string& left, const std::string& right) {
 	return calcPercent(totalAccurate, i);
 }
 
+char androidify(char c) {
+	switch (c) {
+		case '*':
+		return '+';
+		case '?':
+		return '_';
+		default:
+		return c;
+	}
+}
+
 void Album::populateMetadata() {
 	std::string curlCommand = "curl -s --request GET --url \"https://musicbrainz.org/ws/2/release/?query=artist:";
 	curlCommand += convertToUri(artist.c_str());
 	curlCommand += "%20AND%20release:";
 	curlCommand += convertToUri(name.c_str());
 	curlCommand += "&fmt=json\"";
-	json data = json::parse(exec(curlCommand));
-
+	// json data = json::parse(exec(curlCommand));
+	auto rootUrl = "https://musicbrainz.org/ws/2/";
+	// std::cout << std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str())) << "\n";
+	json data = json::parse(httpsGet(std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str()))).value());
+	// std::cout << data1 << "\n";
 
 	json* correctAlbum = &data["releases"][0];
 	for(int i = 0; !correctAlbum->contains("date"); i++) {
@@ -94,7 +111,7 @@ void Album::populateMetadata() {
 		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
 		if(correctRawDate == "") 
 			continue;
-
+		// auto id = release["id"];
 		int correctYear = std::stoi(correctRawDate.substr(0, 4));
 		try {
 			std::string currentRawDate = release.at("date").template get<std::string>();

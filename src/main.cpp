@@ -4,6 +4,7 @@
 #include <fstream>
 #include <json.hpp>
 #include <iostream>
+#include <album.hpp>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
