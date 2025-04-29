@@ -1,7 +1,6 @@
 #include <helpers.hpp>
 #include <memory>
 #include <song.hpp>
-#include <algorithm>
 #include <json.hpp>
 #include <filesystem>
 #include <string>
@@ -166,13 +165,15 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 
 	size_t size = 0;
 	for(auto& album: library) {
-		for(size_t i = 0; i < album->songs.size(); i++) {
-			size++;
+		for(auto& song: album->songs) {
+			if(song->status == Song::Downloaded)
+				size++;
 		}
 	}
 
 	if (size == 0) {
 		std::cout << "No songs to delete! :D\n";
+		return;
 	}
 
 	std::cout << "Are you sure you want to delete: \n";
@@ -186,7 +187,6 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 	std::string answer;
 	std::getline(std::cin, answer);
 
-	// TODO: Check why fs::remove(toRemove) not working
 	if(answer == "y" || answer == "Y") {
 		for(auto& album: library) {
 			for(auto& song: album->songs) {

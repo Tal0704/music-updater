@@ -1,7 +1,9 @@
+#include <cctype>
 #include <song.hpp>
 #include <iostream>
 #include <album.hpp>
 #include <exec.hpp>
+#include <string>
 
 namespace fs = std::filesystem;
 
@@ -10,11 +12,20 @@ Song::Song(Album::Ptr album, Status status)
 { }
 
 Song::Song(const std::string& name, Album::Ptr album, Status status)
-	:album(album), name(name), status(status)
-{ }
+	:album(album), status(status), name(name)
+{ 
+}
 
-bool Song::isFile() {
-	return std::string(name.end() - 4, name.end() - 1) == ".mp";
+char androidify(char c) {
+	switch (c) {
+		case '*':
+			std::cout << c;
+		return '+';
+		case '?':
+		return '_';
+		default:
+		return c;
+	}
 }
 
 std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
@@ -29,6 +40,13 @@ std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
 
 std::string ffmpegCommand(const std::string& path, const Song& song) {
 	std::string ffmpeg("ffmpeg -y -i \"");
+	std::string songName = song.name;
+	for(char& c: songName) {
+		c = androidify(c);
+	}
+
+	std::cout << songName;
+
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
 	ffmpeg += path + "/temp.jpg\" ";
 	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
@@ -38,7 +56,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata track=\"" + std::to_string(song.trackNumber) + "\" ";
 	ffmpeg += "-metadata title=\"" + song.name +"\" ";
 	ffmpeg += " -loglevel quiet \"";
-	ffmpeg += path + "/" + song.name + ".mp3\" ";
+	ffmpeg += path + "/" + songName + ".mp3\" ";
 	return ffmpeg;
 }
 

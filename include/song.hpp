@@ -8,6 +8,7 @@ struct Album;
 
 struct Song 
 {
+public:
 	typedef std::unique_ptr<Song> Ptr;
 
 	enum Status {
@@ -20,13 +21,12 @@ struct Song
 	Song(const std::string& name, std::shared_ptr<Album> album, Status status = Status::InBoth);
 
 	void download(const std::filesystem::path& path);
-	bool isFile();
 
 	std::shared_ptr<Album> album;
-    std::string name;
     std::string URL;
 	int trackNumber;
 	Status status;
+    std::string name;
 };
 
 std::ostream& operator << (std::ostream& stream, const Song::Status& status);
