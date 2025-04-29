@@ -166,7 +166,7 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 
 	size_t size = 0;
 	for(auto& album: library) {
-		for(auto& song: album->songs) {
+		for(size_t i = 0; i < album->songs.size(); i++) {
 			size++;
 		}
 	}
@@ -191,8 +191,8 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 		for(auto& album: library) {
 			for(auto& song: album->songs) {
 				if(song->status == Song::Status::Downloaded) {
-					auto toRemove = "\"" + path.string() + "/" + song->name + "\"";
-					fs::remove(toRemove);
+					auto toRemove = path.string() + "/" + song->name;
+					fs::remove(toRemove.c_str());
 					std::cout << "Deleteing: " << toRemove << "\n";
 				}
 			}
