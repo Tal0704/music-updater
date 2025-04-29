@@ -1,4 +1,3 @@
-Battery | In Both
 Master of Puppets | In Both
 The Thing That Should Not Be | In Both
 Welcome Home (Sanitarium) | In Both
@@ -396,7 +395,7 @@ Lone Sal Bug | In Both
 Sanctum | In Both
 Wondering | In Both
 Watching The Boats With My Dad | In Both
-Ghost / Part 2 | In Both
+Ghost / Part 2 | Library
 Colma | In Both
 How Much Does a Thought Weigh | In Both
 Healing Inside Outside Every Side | In Both
@@ -472,4 +471,14 @@ Ticket To Heaven | In Both
 My Parties | In Both
 Planet Of New Orleans | In Both
 How Long | In Both
-Roundabout | In Both
+Roundabout | Library
+Battery.mp3 | Downloaded
+Communication Breakdown (Remaster).mp3 | Downloaded
+Good Times Bad Times (Remaster).mp3 | Downloaded
+Babe I'm Gonna Leave You (Remaster).mp3 | Downloaded
+Your Time Is Gonna Come (Remaster).mp3 | Downloaded
+I Can't Quit You Baby (Remaster).mp3 | Downloaded
+Black Mountain Side (Remaster).mp3 | Downloaded
+How Many More Times (Remaster).mp3 | Downloaded
+You Shook Me (Remaster).mp3 | Downloaded
+Dazed and Confused (Remaster).mp3 | Downloaded

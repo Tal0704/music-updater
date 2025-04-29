@@ -73,7 +73,7 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::vector<Album::Ptr> albums;
 
 	while(std::getline(inFile, line)) {
-		Album::Ptr album = std::make_unique<Album>();
+		Album::Ptr album = std::make_shared<Album>();
 		auto albumName = getAlbum(line);
 		if(auto temp = getArtist(line)) {
 			artist = temp.value();
@@ -95,7 +95,7 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 				break;
 			}
 
-			Song::Ptr song = std::make_unique<Song>(album.get());
+			Song::Ptr song = std::make_unique<Song>(album, Song::Status::Library);
 			auto songName = getName(line);
 			song->name = songName.value_or("");
 			if(auto URL = getLink(line)) {
@@ -114,75 +114,94 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 	return albums;
 }
 
-std::vector<Song::Ptr> getDownloaded(const fs::path& path) {
-	std::vector<Song::Ptr> songs;
-	Album::Ptr placeHolder;
+std::vector<Album::Ptr> getDownloaded(const fs::path& path) {
+	std::vector<Album::Ptr> albums;
 
 	for(const auto& pathIt: fs::directory_iterator(path)) {
+		Album::Ptr album = std::make_unique<Album>("asd");
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		Song::Ptr song = std::make_unique<Song>(placeHolder.get(), Song::Status::Downloaded);
+		Song::Ptr song = std::make_unique<Song>(album, Song::Status::Downloaded);
 		song->name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
 
-		songs.emplace_back(std::move(song));
+		album->songs.push_back(std::move(song));
+		albums.emplace_back(std::move(album));
 	}
 
-	return songs;
+	return albums;
 }
 
-// TODO: If found song that is not in the library (I.E found == songs.end()) push it to the library with status Downloaded
-void organizeSongs(std::vector<Album::Ptr>& library, std::vector<Song::Ptr>& downloaded) {
-	// Loop over the downloaded songs
-	for(auto it = downloaded.begin(); it != downloaded.end(); ++it) {
-		auto& downloadedSong = *it;
-		// Loop over all the albums in the library
+void organizeSongs(std::vector<Album::Ptr>& library, std::vector<Album::Ptr>& downloaded) {
+	std::vector<Song*> librarySongs;
+
+	for(auto& album: library) {
+		auto& songs = album->songs;
+		for(auto& song: songs) {
+			librarySongs.push_back(song.get());
+		}
+	}
+
+	for(auto& down: downloaded) {
+		auto& downloadedSong = down->songs[0];
+		auto found = false;
+		for(auto& song: librarySongs) {
+			auto& name = downloadedSong->name;
+			if (song->name == name.substr(0, name.size() - 4)) {
+				found = true;
+				song->status = Song::Status::InBoth;
+			}
+		}
+		if(!found) {
+			library.push_back(std::move(downloadedSong->album));
+		}
+	}
+}
+
+void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
+	for(auto& album: library) {
+		std::erase_if(album->songs, [](Song::Ptr& song) -> bool {
+					return song->status == Song::Status::InBoth;
+				});
+	}
+
+	size_t size = 0;
+	for(auto& album: library) {
+		for(auto& song: album->songs) {
+			size++;
+		}
+	}
+
+	if (size == 0) {
+		std::cout << "No songs to delete! :D\n";
+	}
+
+	std::cout << "Are you sure you want to delete: \n";
+	for(auto& album: library) {
+		for(auto& song: album->songs)
+			if(song->status == Song::Status::Downloaded)
+				std::cout << song->name << "\n";
+	}
+	std::cout << "y/N\n";
+
+	std::string answer;
+	std::getline(std::cin, answer);
+
+	// TODO: Check why fs::remove(toRemove) not working
+	if(answer == "y" || answer == "Y") {
 		for(auto& album: library) {
-			auto& songs = album->songs;
-			// For every album find the song that is in library and is already downloaded
-			auto found = std::find_if(songs.begin(), songs.end(), [&](Song::Ptr& song) -> bool {
-					return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
-					});
-			if(found != songs.end()) {
-				found->get()->status = Song::Status::InBoth;
+			for(auto& song: album->songs) {
+				if(song->status == Song::Status::Downloaded) {
+					auto toRemove = "\"" + path.string() + "/" + song->name + "\"";
+					fs::remove(toRemove);
+					std::cout << "Deleteing: " << toRemove << "\n";
+				}
 			}
 		}
 	}
-}
 
-void deleteUnneeded(const std::vector<Song::Ptr>& downloaded, std::vector<Album::Ptr>& library, const fs::path& path) {
-	std::vector<const Song*> songs;
-	std::vector<const Song*> toDelete;
 	for(auto& album: library) {
-		for(auto& song: album->songs)
-			songs.emplace_back(song.get());
-	}
-	for(auto& downloadedSong: downloaded) {
-		if(!downloadedSong->name.ends_with(".mp3"))
-			continue;
-		auto found = std::find_if(songs.begin(), songs.end(), [&](const Song* song) -> bool {
-				return song->name == downloadedSong->name.substr(0, downloadedSong->name.size() - 4);
+		std::erase_if(album->songs, [](Song::Ptr& song) -> bool {
+					return song->status == Song::Status::Downloaded;
 				});
-		if(found != songs.end()) {
-			toDelete.emplace_back(downloadedSong.get());
-		}
-	}
-
-	if(toDelete.size() == 0) {
-		std::cout << "No files to delete!\n";
-		return;
-	}
-	std::cout << "Are you sure you want to delete: \n";
-	for(auto& song: toDelete) {
-		std::cout << song->name << "\n";
-	}
-	std::cout << "y/N\n";
-	std::string answer;
-	std::getline(std::cin, answer);
-	if(answer == "y" || answer == "Y") {
-		for(auto& song: toDelete) {
-			auto toRemove = "\"" + path.string() + "/" + song->name + "\"";
-			fs::remove(toRemove);
-			std::cout << "Deleteing: " << toRemove << "\n";
-		}
 	}
 }

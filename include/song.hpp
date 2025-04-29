@@ -16,14 +16,13 @@ struct Song
 		Library,
 	};
 
-	Song(const Album* album, Status status = Status::InBoth);
-	Song(const std::string& name, const Album* album, Status status = Status::InBoth);
+	Song(std::shared_ptr<Album> album, Status status = Status::InBoth);
+	Song(const std::string& name, std::shared_ptr<Album> album, Status status = Status::InBoth);
 
 	void download(const std::filesystem::path& path);
 	bool isFile();
 
-	// TODO: Change to shared_ptr so all of the songs in the album could point to the same album
-	const Album* album;
+	std::shared_ptr<Album> album;
     std::string name;
     std::string URL;
 	int trackNumber;

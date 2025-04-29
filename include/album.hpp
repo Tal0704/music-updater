@@ -6,7 +6,7 @@
 struct Song;
 
 struct Album {
-	typedef std::unique_ptr<Album> Ptr;
+	typedef std::shared_ptr<Album> Ptr;
 	
 	Album();
 	Album(const std::string& name);

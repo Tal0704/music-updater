@@ -5,11 +5,11 @@
 
 namespace fs = std::filesystem;
 
-Song::Song(const Album* album, Status status)
+Song::Song(Album::Ptr album, Status status)
 	: album(album), status(status)
 { }
 
-Song::Song(const std::string& name, const Album* album, Status status)
+Song::Song(const std::string& name, Album::Ptr album, Status status)
 	:album(album), name(name), status(status)
 { }
 
@@ -36,8 +36,8 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata date=\"" + song.album->year + "\" ";
 	ffmpeg += "-metadata artist=\"" + song.album->artist + "\" ";
 	ffmpeg += "-metadata track=\"" + std::to_string(song.trackNumber) + "\" ";
-	ffmpeg += " -loglevel quiet \"";
 	ffmpeg += "-metadata title=\"" + song.name +"\" ";
+	ffmpeg += " -loglevel quiet \"";
 	ffmpeg += path + "/" + song.name + ".mp3\" ";
 	return ffmpeg;
 }

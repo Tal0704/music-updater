@@ -8,33 +8,13 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-void testingunneeded() {
-	std::ifstream libFile("/home/tal/Documents/Obsidian Vault/music/music.md");
-	fs::path musicPath = "/home/tal/Music";
-	auto downloaded = getDownloaded(musicPath);
-	auto library = getLibrary(libFile);
-
-	organizeSongs(library, downloaded);
-	deleteUnneeded(downloaded, library, musicPath);
-
-}
-
 void run(const fs::path& musicPath, const std::string& libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
 	organizeSongs(library, downloaded);
-
-	std::ofstream o("test.txt");
-	for(const auto& album: library) {
-		for(const auto& song: album->songs) {
-			o << song->name << " | "<< song->status << "\n";
-		}
-	}
-
-	return;
-	deleteUnneeded(downloaded, library, musicPath);
+	cleanLibrary(library, musicPath);
 
 	uint cleanLibraries = 0;
 
@@ -50,10 +30,6 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	if(cleanLibraries == library.size()) {
 		std::cout << "No songs to download!\n";
 	}
-}
-
-void test(const fs::path& musicPath, const std::string& libPath) {
-	std::cout << musicPath << ", " << libPath << "\n";
 }
 
 int main(int argc, char** argv) {
