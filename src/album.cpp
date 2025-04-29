@@ -23,7 +23,6 @@ Album::Album(const std::string& name)
 
 void Album::download(const std::filesystem::path& path) {
 	auto res = httpsGet(imageURL);
-	std::cout << imageURL << "\n";
 	assert(res.has_value());
 	std::ofstream image(path.string() + "/temp.jpg");
 	image << res.value();
