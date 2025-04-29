@@ -21,17 +21,13 @@ Album::Album(const std::string& name)
 
 }
 
-std::string cURLCommand(const std::string& URL, const std::string& path) {
-	std::string curlImage("curl -s --url \"");
-	curlImage += URL;
-	curlImage += "\" --output \"";
-	curlImage += path;
-	curlImage += "/temp.jpg\"";
-	return curlImage;
-}
-
 void Album::download(const std::filesystem::path& path) {
-	exec(cURLCommand(imageURL, path.string()));
+	auto res = httpsGet(imageURL);
+	std::cout << imageURL << "\n";
+	assert(res.has_value());
+	std::ofstream image(path.string() + "/temp.jpg");
+	image << res.value();
+
 	for(auto& song: songs) {
 		std::cout << "Downloading: " << this->name << " - " << song->name << "...\n";
 		song->download(path);
@@ -75,28 +71,9 @@ float precentAccurate(const std::string& left, const std::string& right) {
 	return calcPercent(totalAccurate, i);
 }
 
-char androidify(char c) {
-	switch (c) {
-		case '*':
-		return '+';
-		case '?':
-		return '_';
-		default:
-		return c;
-	}
-}
-
 void Album::populateMetadata() {
-	std::string curlCommand = "curl -s --request GET --url \"https://musicbrainz.org/ws/2/release/?query=artist:";
-	curlCommand += convertToUri(artist.c_str());
-	curlCommand += "%20AND%20release:";
-	curlCommand += convertToUri(name.c_str());
-	curlCommand += "&fmt=json\"";
-	// json data = json::parse(exec(curlCommand));
 	auto rootUrl = "https://musicbrainz.org/ws/2/";
-	// std::cout << std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str())) << "\n";
 	json data = json::parse(httpsGet(std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str()))).value());
-	// std::cout << data1 << "\n";
 
 	json* correctAlbum = &data["releases"][0];
 	for(int i = 0; !correctAlbum->contains("date"); i++) {
