@@ -13,13 +13,11 @@ Song::Song(Album::Ptr album, Status status)
 
 Song::Song(const std::string& name, Album::Ptr album, Status status)
 	:album(album), status(status), name(name)
-{ 
-}
+{ }
 
 char androidify(char c) {
 	switch (c) {
 		case '*':
-			std::cout << c;
 		return '+';
 		case '?':
 		return '_';
@@ -44,8 +42,6 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	for(char& c: songName) {
 		c = androidify(c);
 	}
-
-	std::cout << songName;
 
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
 	ffmpeg += path + "/temp.jpg\" ";
