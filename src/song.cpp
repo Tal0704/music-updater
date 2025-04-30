@@ -27,8 +27,7 @@ std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
 
 std::string ffmpegCommand(const std::string& path, const Song& song) {
 	std::string ffmpeg("ffmpeg -y -i \"");
-	std::string songName = song.name;
-	androidify(songName);
+	std::string songName = androidify(song.name);
 
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
 	ffmpeg += path + "/temp.jpg\" ";
@@ -37,6 +36,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata date=\"" + song.album->year + "\" ";
 	ffmpeg += "-metadata artist=\"" + song.album->artist + "\" ";
 	ffmpeg += "-metadata track=\"" + std::to_string(song.trackNumber) + "\" ";
+	ffmpeg += "-metadata genre=\"" + song.album->genre + "\" ";
 	ffmpeg += "-metadata title=\"" + song.name +"\" ";
 	ffmpeg += " -loglevel quiet \"";
 	ffmpeg += path + "/" + songName + ".mp3\" ";

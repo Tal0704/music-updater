@@ -87,7 +87,14 @@ void Album::populateMetadata() {
 		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
 		if(correctRawDate == "") 
 			continue;
-		// auto id = release["id"];
+
+		if (genre == ""){
+			auto id = release["id"].template get<std::string>();
+			auto ge = json::parse(httpsGet(std::format("{}release/{}?inc=genres&fmt=json", rootUrl, id)).value());
+			if (!ge["genres"].empty())
+				genre = ge["genres"][0]["name"].template get<std::string>();
+		}
+
 		int correctYear = std::stoi(correctRawDate.substr(0, 4));
 		try {
 			std::string currentRawDate = release.at("date").template get<std::string>();
