@@ -215,6 +215,7 @@ std::string androidify(const std::string& string) {
 				c = '+';
 				break;
 			case '?':
+			case '/':
 				c = '_';
 				break;
 			default:
