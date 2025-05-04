@@ -34,7 +34,7 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 }
 
 int main(int argc, char** argv) {
-	if (argc < 3) {
+	if (argc != 3) {
 		std::cout << "Usage: " << argv[0] << " {Path to music folder} {Path to music library(.md file)}\n";
 		return 1;
 	}
