@@ -21,7 +21,7 @@ std::optional<std::string> getName(const std::string& line) {
 }
 
 std::optional<std::string> getThumbnail(const std::string& line) {
-	if(line.length() == 0 || !line.starts_with("## !["))
+	if(line.length() == 0 || !line.starts_with("## ["))
 		return {};
 	int i = 1;
 	while(line[i] != ']' && uint(i) < line.length())
@@ -54,10 +54,10 @@ std::optional<std::string> getAlbum(const std::string& line) {
 	if(line.length() == 0 || !line.starts_with("## "))
 		return {};
 
-	int i = 5;
+	int i = 4;
 	while(line[i] != ']' && uint(i) < line.length())
 		i++;
-	return std::string(line.begin() + 5, line.begin() + i);
+	return std::string(line.begin() + 4, line.begin() + i);
 }
 
 std::optional<std::string> getArtist(const std::string& line) {

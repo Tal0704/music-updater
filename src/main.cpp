@@ -29,11 +29,15 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	}
 
 	if(cleanLibraries == library.size()) {
-		std::cout << "No songs to download!\n";
+		std::cout << "No songs to download! :D\n";
 	}
 }
 
 int main(int argc, char** argv) {
+	if (argc < 3) {
+		std::cout << "Usage: " << argv[0] << " {Path to music folder} {Path to music library(.md file)}\n";
+		return 1;
+	}
 	run(argv[1], argv[2]);
 	return 0;
 }
