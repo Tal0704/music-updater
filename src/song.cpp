@@ -1,4 +1,3 @@
-#include <cctype>
 #include <song.hpp>
 #include <iostream>
 #include <album.hpp>
@@ -7,10 +6,6 @@
 #include <helpers.hpp>
 
 namespace fs = std::filesystem;
-
-Song::Song(Album::Ptr album, Status status)
-	: album(album), status(status)
-{ }
 
 Song::Song(const std::string& name, Album::Ptr album, Status status)
 	:album(album), status(status), name(name)
@@ -39,7 +34,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata genre=\"" + song.album->genre + "\" ";
 	ffmpeg += "-metadata title=\"" + song.name +"\" ";
 	ffmpeg += " -loglevel quiet \"";
-	ffmpeg += path + "/" + songName + ".mp3\" ";
+	ffmpeg += path + "/" + song.album->artist + " - " + songName + ".mp3\" ";
 	return ffmpeg;
 }
 
@@ -67,4 +62,10 @@ std::ostream& operator << (std::ostream& stream, const Song::Status& status) {
 	if(status == Status::InBoth) {
 	}
 	return stream;
+}
+
+bool operator==(const Song& left, const Song& right) {
+	return (left.name == right.name) &&
+		 (left.album->name == right.album->name) &&
+		 (left.album->artist == right.album->artist);
 }

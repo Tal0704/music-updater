@@ -32,7 +32,7 @@ WARNINGS = -Wall -Wpedantic -Wextra -Wno-unused-parameter
 LDFLAGS = 
 
 # Libraries to link
-LDLIBS = -l curl
+LDLIBS = -l curl -l avformat -l avcodec -l avutil
 
 # Target OS detection
 ifeq ($(OS),Windows_NT) # OS is a preexisting environment variable on Windows

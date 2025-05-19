@@ -10,7 +10,8 @@ extern "C" {
 FileMetadata::FileMetadata(const char* fileName)
 	: mFilename(fileName)
 {
-	assert(avformat_open_input(&mContext, mFilename.c_str(), NULL, NULL) < 0);
+	mContext = nullptr;
+	assert(avformat_open_input(&mContext, mFilename.c_str(), NULL, NULL) == 0);
 	mMetadata = mContext->metadata;
 	assert(mMetadata != NULL);
 }

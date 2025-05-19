@@ -7,6 +7,8 @@
 #include <iostream>
 #include <cassert>
 #include <album.hpp>
+#include <unordered_map>
+#include <fileMetadata.hpp>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -67,21 +69,20 @@ std::optional<std::string> getArtist(const std::string& line) {
 	return line.substr(2, line.size() - 1);
 }
 
-std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
+std::unordered_map<std::string, Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string line;
 	std::string artist;
-	std::vector<Album::Ptr> albums;
+	std::unordered_map<std::string, Album::Ptr> albums;
 
 	while(std::getline(inFile, line)) {
-		Album::Ptr album = std::make_shared<Album>();
-		auto albumName = getAlbum(line);
 		if(auto temp = getArtist(line)) {
 			artist = temp.value();
 		} 
+		auto albumName = getAlbum(line);
 		if(!albumName.has_value()) {
 			continue;
 		}
-		album->name = albumName.value();
+		Album::Ptr album = std::make_shared<Album>(albumName.value());
 		album->artist = artist;
 
 		if(auto thumbnail = getThumbnail(line)) {
@@ -95,9 +96,8 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 				break;
 			}
 
-			Song::Ptr song = std::make_unique<Song>(album, Song::Status::Library);
 			auto songName = getName(line);
-			song->name = songName.value_or("");
+			Song::Ptr song = std::make_unique<Song>(songName.value_or(""), album, Song::Status::Library);
 			if(auto URL = getLink(line)) {
 				song->URL = URL.value_or("");
 			}
@@ -108,65 +108,79 @@ std::vector<Album::Ptr> getLibrary(std::ifstream& inFile) {
 			}
 		}
 		album->totalSize = album->songs.size();
-		albums.emplace_back(std::move(album));
+		if(albums[album->name].get() == nullptr) {
+			albums[album->name] = std::make_shared<Album>(album->name);
+		}
+		albums[album->name] = std::move(album);
 	}
 
 	return albums;
 }
 
-std::vector<Album::Ptr> getDownloaded(const fs::path& path) {
-	std::vector<Album::Ptr> albums;
+std::unordered_map<std::string, Album::Ptr> getDownloaded(const fs::path& path) {
+	std::unordered_map<std::string, Album::Ptr> albums;
 
 	for(const auto& pathIt: fs::directory_iterator(path)) {
-		Album::Ptr album = std::make_unique<Album>("asd");
+		FileMetadata metadata(pathIt.path().c_str());
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
-		Song::Ptr song = std::make_unique<Song>(album, Song::Status::Downloaded);
-		song->name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
+		auto name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
+		auto albumName = metadata.read("album");
+		auto artistName = metadata.read("artist");
+		Album::Ptr album = std::make_unique<Album>(albumName);
+		Song::Ptr song = std::make_unique<Song>(name, album, Song::Status::Downloaded);
 
-		album->songs.push_back(std::move(song));
-		albums.emplace_back(std::move(album));
+		if(albums[albumName].get() == nullptr) {
+			albums[albumName] = std::make_shared<Album>(albumName);
+		}
+		albums[albumName]->songs.push_back(std::move(song));
 	}
 
 	return albums;
 }
 
-void organizeSongs(std::vector<Album::Ptr>& library, std::vector<Album::Ptr>& downloaded) {
+void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::unordered_map<std::string, Album::Ptr>& downloaded) {
 	std::vector<Song*> librarySongs;
 
 	for(auto& album: library) {
-		auto& songs = album->songs;
+		auto& songs = album.second->songs;
 		for(auto& song: songs) {
+			song->status = Song::Status::Library;
 			librarySongs.push_back(song.get());
 		}
 	}
 
-	for(auto& down: downloaded) {
-		auto& downloadedSong = down->songs[0];
-		auto found = false;
-		for(auto& song: librarySongs) {
-			auto& name = downloadedSong->name;
-			if (androidify(song->name) == name.substr(0, name.size() - 4)) {
-				found = true;
-				song->status = Song::Status::InBoth;
+	for(auto& [downloadedAlbumName, downloadedAlbum]: downloaded) {
+		bool found = false;
+		for(auto& downloadedSong: downloadedAlbum->songs) {
+			auto& libAlbum = library[downloadedAlbumName];
+			for(auto& libSong: libAlbum->songs) {
+				if(androidify(libSong->name) == downloadedSong->name.substr(0, downloadedSong->name.size() - 4)) {
+					found = true;
+					libSong->status = Song::Status::InBoth;
+				}
+			}
+			if(!found) {
+				if(library[downloadedAlbumName].get() == nullptr) {
+					library[downloadedAlbumName] = std::make_shared<Album>(downloadedAlbumName);
+				}
+				library[downloadedAlbumName]->songs.push_back(std::move(downloadedSong));
 			}
 		}
-		if(!found) {
-			library.push_back(std::move(downloadedSong->album));
-		}
 	}
+
 }
 
-void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
+void cleanLibrary(std::unordered_map<std::string, Album::Ptr>& library, const fs::path& path) {
 	for(auto& album: library) {
-		std::erase_if(album->songs, [](Song::Ptr& song) -> bool {
+		std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
 					return song->status == Song::Status::InBoth;
 				});
 	}
 
 	size_t size = 0;
 	for(auto& album: library) {
-		for(auto& song: album->songs) {
+		for(auto& song: album.second->songs) {
 			if(song->status == Song::Downloaded)
 				size++;
 		}
@@ -179,7 +193,7 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 
 	std::cout << "Are you sure you want to delete: \n";
 	for(auto& album: library) {
-		for(auto& song: album->songs)
+		for(auto& song: album.second->songs)
 			if(song->status == Song::Status::Downloaded)
 				std::cout << song->name << "\n";
 	}
@@ -190,7 +204,7 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 
 	if(answer == "y" || answer == "Y") {
 		for(auto& album: library) {
-			for(auto& song: album->songs) {
+			for(auto& song: album.second->songs) {
 				if(song->status == Song::Status::Downloaded) {
 					auto toRemove = path.string() + "/" + song->name;
 					fs::remove(toRemove.c_str());
@@ -201,7 +215,7 @@ void cleanLibrary(std::vector<Album::Ptr>& library, const fs::path& path) {
 	}
 
 	for(auto& album: library) {
-		std::erase_if(album->songs, [](Song::Ptr& song) -> bool {
+		std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
 					return song->status == Song::Status::Downloaded;
 				});
 	}

@@ -12,12 +12,11 @@ public:
 	typedef std::unique_ptr<Song> Ptr;
 
 	enum Status {
-		InBoth,
-		Downloaded,
-		Library,
+		InBoth = 0 << 0,
+		Downloaded = 1 << 0,
+		Library = 1 << 1,
 	};
 
-	Song(std::shared_ptr<Album> album, Status status = Status::InBoth);
 	Song(const std::string& name, std::shared_ptr<Album> album, Status status = Status::InBoth);
 
 	void download(const std::filesystem::path& path);
@@ -28,5 +27,7 @@ public:
 	Status status;
     std::string name;
 };
+
+bool operator==(const Song& left, const Song& right);
 
 std::ostream& operator << (std::ostream& stream, const Song::Status& status);
