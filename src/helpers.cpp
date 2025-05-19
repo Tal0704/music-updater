@@ -130,6 +130,7 @@ std::unordered_map<std::string, Album::Ptr> getDownloaded(const fs::path& path) 
 		auto artistName = metadata.read("artist");
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song = std::make_unique<Song>(name, album, Song::Status::Downloaded);
+		album->artist = artistName;
 
 		if(albums[albumName].get() == nullptr) {
 			albums[albumName] = std::make_shared<Album>(albumName);
@@ -143,10 +144,7 @@ std::unordered_map<std::string, Album::Ptr> getDownloaded(const fs::path& path) 
 void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::unordered_map<std::string, Album::Ptr>& downloaded) {
 	std::vector<Song*> librarySongs;
 
-	for(auto it = library.begin(); it != library.end(); it++) {
-		auto& [libAlbumName, libAlbum] = *it;
-
-		// std::cout << "kjh " << libAlbumName << std::endl;
+	for(auto& [libAlbumName, libAlbum]: library) {
 		auto found = std::find_if(downloaded.begin(), downloaded.end(), [&](auto& downAlbum) -> bool {
 				return downAlbum.second->name == libAlbumName;
 				});
@@ -159,7 +157,6 @@ void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::un
 					auto downSongName = downSong->name.substr(firstHyphon + 2, size - firstHyphon - 6);
 					if(androidify(libSong->name) == downSongName) {
 						libSong->status = Song::Status::InBoth;
-						std::cout << libSong->name << " | " << libSong->status << std::endl;
 						isFound = true;
 					}
 				}
@@ -167,116 +164,85 @@ void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::un
 					if(library[downSong->album->name].get() == nullptr) {
 						library[downSong->album->name] = std::make_shared<Album>(downSong->album->name);
 					}
-					std::cout << library[downSong->album->name]->songs.size() << std::endl;
 					auto firstHyphon = downSong->name.find_first_of('-');
 					auto size = downSong->name.size();
 					downSong->name = downSong->name.substr(firstHyphon + 2, size - firstHyphon - 6);
-					std::cout << downSong->name << " | " << downSong->status << std::endl;
-					std::cout << downSong << "\n";
-					library[downSong->album->name]->songs.push_back(std::move(downSong));
-					std::cout << downSong << "\n";
-					it++;
+					const auto& name = downSong->album->name;
+					library[name]->songs.push_back(std::move(downSong));
 				}
 			}
 		}
+	}
+	return;
+}
+
+void cleanLibrary(std::unordered_map<std::string, Album::Ptr>& library, const fs::path& path) {
+	for(auto& album: library) {
+		std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
+				return song->status == Song::Status::InBoth;
+				});
+	}
+
+	size_t size = 0;
+	for(auto& [albumName, album]: library) {
+		// if(album->songs.empty()) {
+		// 	library.erase(albumName);
+		// }
+		for(auto& song: album->songs) {
+			if(song->status == Song::Downloaded)
+				size++;
+		}
+	}
+
+	if (size == 0) {
+		std::cout << "No songs to delete! :D\n";
 		return;
+	}
 
+	std::cout << "Are you sure you want to delete: \n";
+	for(auto& album: library) {
+		for(auto& song: album.second->songs)
+			if(song->status == Song::Status::Downloaded)
+				std::cout << song->album->name << ": " << song->name << "\n";
+	}
+	std::cout << "y/N\n";
+
+	std::string answer;
+	std::getline(std::cin, answer);
+
+	if(answer == "y" || answer == "Y") {
 		for(auto& album: library) {
-			auto& songs = album.second->songs;
-			for(auto& song: songs) {
-				song->status = Song::Status::Library;
-				librarySongs.push_back(song.get());
-			}
-		}
-
-		for(auto& [downloadedAlbumName, downloadedAlbum]: downloaded) {
-			bool found = false;
-			for(auto& downloadedSong: downloadedAlbum->songs) {
-				auto& libAlbum = library[downloadedAlbumName];
-				for(auto& libSong: libAlbum->songs) {
-					const auto& downloadedSongName = downloadedSong->name;
-					auto firstHyphon = downloadedSongName.find_first_of('-');
-					if(androidify(libSong->name) == downloadedSong->name.substr(firstHyphon + 1, downloadedSong->name.size() - 4)) {
-						found = true;
-						libSong->status = Song::Status::InBoth;
-					}
-				}
-				if(!found) {
-					if(library[downloadedAlbumName].get() == nullptr) {
-						library[downloadedAlbumName] = std::make_shared<Album>(downloadedAlbumName);
-					}
-					library[downloadedAlbumName]->songs.push_back(std::move(downloadedSong));
+			for(auto& song: album.second->songs) {
+				if(song->status == Song::Status::Downloaded) {
+					auto toRemove = path.string() + "/" + song->album->artist + " - " + song->name + ".mp3";
+					fs::remove(toRemove.c_str());
+					std::cout << "Deleteing: " << toRemove << "\n";
 				}
 			}
 		}
+	}
 
+	for(auto& album: library) {
+		std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
+				return song->status == Song::Status::Downloaded;
+				});
 	}
 }
 
-	void cleanLibrary(std::unordered_map<std::string, Album::Ptr>& library, const fs::path& path) {
-		for(auto& album: library) {
-			std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
-					return song->status == Song::Status::InBoth;
-					});
-		}
-
-		size_t size = 0;
-		for(auto& album: library) {
-			for(auto& song: album.second->songs) {
-				if(song->status == Song::Downloaded)
-					size++;
-			}
-		}
-
-		if (size == 0) {
-			std::cout << "No songs to delete! :D\n";
-			return;
-		}
-
-		std::cout << "Are you sure you want to delete: \n";
-		for(auto& album: library) {
-			for(auto& song: album.second->songs)
-				if(song->status == Song::Status::Downloaded)
-					std::cout << song->name << "\n";
-		}
-		std::cout << "y/N\n";
-
-		std::string answer;
-		std::getline(std::cin, answer);
-
-		if(answer == "y" || answer == "Y") {
-			for(auto& album: library) {
-				for(auto& song: album.second->songs) {
-					if(song->status == Song::Status::Downloaded) {
-						auto toRemove = path.string() + "/" + song->name;
-						fs::remove(toRemove.c_str());
-						std::cout << "Deleteing: " << toRemove << "\n";
-					}
-				}
-			}
-		}
-
-		for(auto& album: library) {
-			std::erase_if(album.second->songs, [](Song::Ptr& song) -> bool {
-					return song->status == Song::Status::Downloaded;
-					});
+std::string androidify(const std::string& string) {
+	std::string ret = string;
+	for(auto& c: ret) {
+		switch (c) {
+			case '*':
+				c = '+';
+				break;
+			case '?':
+			case '/':
+				c = '_';
+				break;
+			default:
+				;
 		}
 	}
-
-	std::string androidify(const std::string& string) {
-		std::string ret = string;
-		for(auto& c: ret) {
-			switch (c) {
-				case '*':
-					c = '+';
-					break;
-				case '?':
-				case '/':
-					c = '_';
-					break;
-				default:
-					;
-			}
-		}
-		return ret;
-	}
+	return ret;
+}

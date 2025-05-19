@@ -170,7 +170,7 @@ install: all copyassets
 .PHONY: run
 run: all
 	@echo "Starting program: $(BIN_DIR)/$(EXEC)"
-	@cd ./$(BIN_DIR); ./$(EXEC) ~/Music ~/Documents/notes/music/music.md
+	@cd ./$(BIN_DIR); ./$(EXEC)
 
 # Copy assets to bin directory for selected platform
 .PHONY: copyassets
