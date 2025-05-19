@@ -33,35 +33,54 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	}
 }
 
+void print(std::unordered_map<std::string, Album::Ptr>& library) {
+	std::ofstream file("test.txt");
+
+	for(auto& [albumName, album]: library) {
+		if(!album->songs.empty())
+		{
+			file << albumName << "\n";
+			for(auto& song: album->songs) {
+				file << song->name << " | " << song->status << "\n";
+			}
+			file << std::endl;
+		}
+	}
+}
+
 void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
 
 	organizeSongs(library, downloaded);
-
+	print(library);
+	return;
 	cleanLibrary(library, musicPath);
+
+
+	return;
+
 
 	uint cleanLibraries = 0;
 
-	return;
 	for(auto& [albumName, album]: library) {
-		if(album->songs.size() == 0) {
-			cleanLibraries++;
-			continue;
-		}
+		// if(album->songs.size() == 0) {
+		// 	cleanLibraries++;
+		// 	continue;
+		// }
 		album->populateMetadata();
 		album->download(musicPath);
 	}
 
-	if(cleanLibraries == library.size()) {
+	if(library.size() == 0) {
 		std::cout << "No songs to download! :D\n";
 	}
 }
 
 #ifndef NDEBUG
 int main() {
-	testOrganize("/home/tal/Music", "/home/tal/Documents/notes/music/music.md");
+	testOrganize("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
 #else

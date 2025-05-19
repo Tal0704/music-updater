@@ -12,9 +12,9 @@ public:
 	typedef std::unique_ptr<Song> Ptr;
 
 	enum Status {
-		InBoth = 0 << 0,
-		Downloaded = 1 << 0,
-		Library = 1 << 1,
+		InBoth,
+		Downloaded,
+		Library,
 	};
 
 	Song(const std::string& name, std::shared_ptr<Album> album, Status status = Status::InBoth);

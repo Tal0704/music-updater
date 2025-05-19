@@ -4,6 +4,7 @@
 #include <exec.hpp>
 #include <string>
 #include <helpers.hpp>
+#include <format>
 
 namespace fs = std::filesystem;
 
@@ -39,7 +40,7 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 }
 
 void Song::download(const fs::path& path) {
-	exec(yt_dlpCommand(URL, path.c_str()));
+	exec(std::format("yt-dlp -x --audio-format mp3 \"{}\" -P {} -o temp -q --cookies-from-browser firefox -N 20", URL, path.c_str()));
 	exec(ffmpegCommand(path, *this));
 	fs::remove(path.string() + "/temp.mp3");
 }
