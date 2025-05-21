@@ -1,7 +1,6 @@
 #include <cstdlib>
 #include <curl/curl.h>
 #include <https.hpp>
-#include <cassert>
 #include <iostream>
 
 size_t writeMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);

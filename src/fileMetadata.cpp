@@ -1,5 +1,5 @@
 #include <fileMetadata.hpp>
-#include <cassert>
+#include <format>
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -11,9 +11,14 @@ FileMetadata::FileMetadata(const char* fileName)
 	: mFilename(fileName)
 {
 	mContext = nullptr;
-	assert(avformat_open_input(&mContext, mFilename.c_str(), NULL, NULL) == 0);
+	if (avformat_open_input(&mContext, mFilename.c_str(), NULL, NULL) != 0) {
+		throw std::runtime_error(std::format("Couldn't open {} for reading metadata", mFilename));
+	}
 	mMetadata = mContext->metadata;
-	assert(mMetadata != NULL);
+	
+	if (mMetadata == NULL) {
+		throw std::runtime_error(std::format("No metadata was found for {}", mFilename));
+	}
 }
 
 FileMetadata::FileMetadata(const std::string& fileName)

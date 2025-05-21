@@ -6,10 +6,10 @@
 #include <filesystem>
 #include <string>
 #include <iostream>
-#include <cassert>
 #include <album.hpp>
 #include <unordered_map>
 #include <fileMetadata.hpp>
+#include <format>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
@@ -75,7 +75,9 @@ std::unordered_map<std::string, Album::Ptr> getLibrary(std::ifstream& inFile) {
 	std::string artist;
 	std::unordered_map<std::string, Album::Ptr> albums;
 
+	uint lineNumber = 0;
 	while(std::getline(inFile, line)) {
+		lineNumber++;
 		if(auto temp = getArtist(line)) {
 			artist = temp.value();
 		} 
@@ -89,13 +91,16 @@ std::unordered_map<std::string, Album::Ptr> getLibrary(std::ifstream& inFile) {
 		if(auto thumbnail = getThumbnail(line)) {
 			album->imageURL = thumbnail.value();
 		}
-		assert(!((album->imageURL.length() != 0) ^ (album->artist.length() != 0)));
+		if(!(!((album->imageURL.length() != 0) ^ (album->artist.length() != 0)))) {
+			throw std::runtime_error(std::format("Did not found image url or the artist in line {}", lineNumber));
+		}
 
 		int i = 1;
 		while(line != "") {
 			if(!std::getline(inFile, line)) {
 				break;
 			}
+			lineNumber++;
 
 			auto songName = getName(line);
 			Song::Ptr song = std::make_unique<Song>(songName.value_or(""), album, Song::Status::Library);
@@ -122,6 +127,14 @@ std::unordered_map<std::string, Album::Ptr> getDownloaded(const fs::path& path) 
 	std::unordered_map<std::string, Album::Ptr> albums;
 
 	for(const auto& pathIt: fs::directory_iterator(path)) {
+		if (!pathIt.is_regular_file()) {
+			continue;
+		}
+		auto foundTemp = pathIt.path().string().find("temp");
+		if(foundTemp != std::string::npos) {
+			fs::remove(pathIt.path());		
+			continue;
+		}
 		FileMetadata metadata(pathIt.path().c_str());
 		auto lastSlash = pathIt.path().string().find_last_of('/');
 		auto pathstr = pathIt.path().string();
@@ -148,9 +161,9 @@ void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::un
 		auto found = std::find_if(downloaded.begin(), downloaded.end(), [&](auto& downAlbum) -> bool {
 				return downAlbum.second->name == libAlbumName;
 				});
-		bool isFound = false;
 		if (found != downloaded.end()) {
 			for(auto& downSong: downloaded[libAlbumName]->songs) {
+				bool isFound = false;
 				for(auto& libSong: libAlbum->songs) {
 					auto firstHyphon = downSong->name.find_first_of('-');
 					auto size = downSong->name.size();
@@ -167,7 +180,7 @@ void organizeSongs(std::unordered_map<std::string, Album::Ptr>& library, std::un
 					auto firstHyphon = downSong->name.find_first_of('-');
 					auto size = downSong->name.size();
 					downSong->name = downSong->name.substr(firstHyphon + 2, size - firstHyphon - 6);
-					const auto& name = downSong->album->name;
+					const auto name = downSong->album->name;
 					library[name]->songs.push_back(std::move(downSong));
 				}
 			}

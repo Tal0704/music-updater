@@ -35,9 +35,34 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	}
 }
 
+typedef std::unordered_map<std::string, Album::Ptr> libType ;
+
+std::ostream& operator<< (std::ostream& stream, const libType& lib) {
+	for(auto& [albumName, album]: lib) {
+		stream << albumName << std::endl;
+		for (auto& song: album->songs) {
+			stream << song->name << " | " << song->status << std::endl;
+		}
+		stream << std::endl;
+	}
+	return stream;
+}
+
+// void print(std::ostream& stream, const libType& lib) {
+// 	for(auto& [albumName, album]: lib) {
+// 		stream << albumName << std::endl;
+// 		for (auto& song: album->songs) {
+// 			stream << song->name << " | " << song->status << std::endl;
+// 		}
+// 		stream << std::endl;
+// 	}
+// }
+
 void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
+	std::ofstream file("test.txt");
+	file << "Library:\n" << downloaded << "\n";
 	auto library = getLibrary(libFile);
 
 	organizeSongs(library, downloaded);
@@ -72,7 +97,7 @@ int main(int argc, char** argv) {
 		std::cout << "Usage: " << argv[0] << " {Path to music folder} {Path to music library(.md file)}\n";
 		return 1;
 	}
-	// run(argv[1], argv[2]);
+	run(argv[1], argv[2]);
 	return 0;
 }
 #endif
