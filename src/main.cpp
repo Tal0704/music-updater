@@ -48,16 +48,6 @@ std::ostream& operator<< (std::ostream& stream, const libType& lib) {
 	return stream;
 }
 
-// void print(std::ostream& stream, const libType& lib) {
-// 	for(auto& [albumName, album]: lib) {
-// 		stream << albumName << std::endl;
-// 		for (auto& song: album->songs) {
-// 			stream << song->name << " | " << song->status << std::endl;
-// 		}
-// 		stream << std::endl;
-// 	}
-// }
-
 void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
