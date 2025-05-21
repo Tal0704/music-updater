@@ -88,7 +88,7 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 
 #ifndef NDEBUG
 int main() {
-	testOrganize("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
+	testOrganize("/home/tal/Desktop/music", "/home/tal/Documents/notes/music/music.md");
 	return 0;
 }
 #else
