@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include <filesystem>
+#include <optional>
 
 struct Song;
 
@@ -12,7 +13,7 @@ struct Album {
 	Album(const std::string& name);
 
 	void download(const std::filesystem::path& path);
-	void populateMetadata();
+	void populateMetadata(const std::optional<int>& date);
 
 	std::vector<std::unique_ptr<Song>> songs;
 	std::string name;

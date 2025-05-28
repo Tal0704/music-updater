@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include <iostream>
 #include <exec.hpp>
+#include <stdexcept>
 #include <string>
 #include <https.hpp>
 #include <format>
@@ -73,20 +74,32 @@ float precentAccurate(const std::string& left, const std::string& right) {
 	return calcPercent(totalAccurate, i);
 }
 
-void Album::populateMetadata() {
+void Album::populateMetadata(const std::optional<int>& date) {
 	auto rootUrl = "https://musicbrainz.org/ws/2/";
+#ifndef NDEBUG
+	std::cout << std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str())) << std::endl;
+#endif
 	json data = json::parse(httpsGet(std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str()))).value());
 
 	json* correctAlbum = &data["releases"][0];
-	for(int i = 0; !correctAlbum->contains("date"); i++) {
-		correctAlbum = &data["releases"][i++];
+	if (!date.has_value()) {
+		try
+		{
+			// TODO: check if i is less then data["releases"].size if yes throw error
+			for(int i = 0; !correctAlbum->contains("date"); i++) {
+				correctAlbum = &data["releases"][i++];
+			}
+		} catch ( ... ) {
+			throw std::runtime_error(std::format("Error, couldn't found date for {} - {}", artist, name));
+		}
 	}
 
 	for(auto& release: data["releases"]) {
 		if(release["score"] <= 60)
 			continue;
-		if(!release.contains("date"))
-			continue;
+		if(date.has_value())
+			if(!release.contains("date"))
+				continue;
 		std::string correctRawDate = correctAlbum->at("date").template get<std::string>();
 		if(correctRawDate == "") 
 			continue;
@@ -118,6 +131,10 @@ void Album::populateMetadata() {
 
 	auto& album = *correctAlbum;
 	std::string albumID = album["id"].template get<std::string>();
-	year = album["date"].template get<std::string>().substr(0, 4);
-	year = year.substr(0, 4);
+	if (!date.has_value()){
+		year = album["date"].template get<std::string>().substr(0, 4);
+		year = year.substr(0, 4);
+	} else {
+		year = date.value();
+	}
 }

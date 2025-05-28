@@ -26,7 +26,11 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata();
+		try {
+			album->populateMetadata({});
+		} catch (const std::exception& err) {
+			std::cout << err.what() << "\n";
+		}
 		album->download(musicPath);
 	}
 
@@ -51,8 +55,6 @@ std::ostream& operator<< (std::ostream& stream, const libType& lib) {
 void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
-	std::ofstream file("test.txt");
-	file << "Library:\n" << downloaded << "\n";
 	auto library = getLibrary(libFile);
 
 	organizeSongs(library, downloaded);
@@ -67,7 +69,7 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata();
+		album->populateMetadata(1);
 		album->download(musicPath);
 	}
 
@@ -78,7 +80,7 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 
 #ifndef NDEBUG
 int main() {
-	testOrganize("/home/tal/Desktop/music", "/home/tal/Documents/notes/music/music.md");
+	testOrganize("/home/tal/Music", "/home/tal/Documents/notes/music/music.md");
 	return 0;
 }
 #else
