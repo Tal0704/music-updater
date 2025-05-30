@@ -27,7 +27,7 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 			continue;
 		}
 		try {
-			album->populateMetadata({});
+			album->populateMetadata();
 		} catch (const std::exception& err) {
 			std::cout << err.what() << "\n";
 		}
@@ -69,7 +69,13 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 			cleanLibraries++;
 			continue;
 		}
-		album->populateMetadata(1);
+		try {
+			album->populateMetadata();
+		}
+		catch (const std::exception& e) {
+			std::cout << e.what() << std::endl;
+			continue;
+		}
 		album->download(musicPath);
 	}
 
@@ -80,7 +86,7 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 
 #ifndef NDEBUG
 int main() {
-	testOrganize("/home/tal/Music", "/home/tal/Documents/notes/music/music.md");
+	testOrganize("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
 #else
