@@ -1,3 +1,4 @@
+#include "https.hpp"
 #include <helpers.hpp>
 #include <exec.hpp>
 #include <song.hpp>
@@ -31,7 +32,6 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 		}
 		catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;
-			continue;
 		}
 		album->download(musicPath);
 	}
@@ -54,41 +54,21 @@ std::ostream& operator<< (std::ostream& stream, const libType& lib) {
 	return stream;
 }
 
-void testOrganize(const fs::path& musicPath, const std::string& libPath) {
-	std::ifstream libFile(libPath);
-	auto downloaded = getDownloaded(musicPath);
-	auto library = getLibrary(libFile);
-
-	organizeSongs(library, downloaded);
-	cleanLibrary(library, musicPath);
-
-	uint cleanLibraries = 0;
-	uint total = 0;
-
-	for(auto& [albumName, album]: library) {
-		total++;
-		if(album->songs.size() == 0) {
-			cleanLibraries++;
-			continue;
-		}
-		try {
-			album->populateMetadata();
-		}
-		catch (const std::exception& e) {
-			std::cout << e.what() << std::endl;
-			continue;
-		}
-		album->download(musicPath);
-	}
-
-	if(cleanLibraries == total) {
-		std::cout << "No songs to download! :D\n";
-	}
+void testLyrics() {
+	std::ifstream file("api.env");
+	std::string apiKey;
+	std::getline(file, apiKey);
+	apiKey = apiKey.substr(apiKey.find(" = ") + 3);
+	auto res = getLyrics("Metallica", "Master Of Puppets", apiKey);
+	std::cout << res.value_or("Error") << std::endl;
 }
+
 
 // TODO: Add a list at the end of the downloading showing if there were any errors downloading
 #ifndef NDEBUG
 int main() {
+	testLyrics();
+	return 0;
 	run("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
