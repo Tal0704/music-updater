@@ -28,8 +28,10 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 		}
 		try {
 			album->populateMetadata();
-		} catch (const std::exception& err) {
-			std::cout << err.what() << "\n";
+		}
+		catch (const std::exception& e) {
+			std::cout << e.what() << std::endl;
+			continue;
 		}
 		album->download(musicPath);
 	}
@@ -84,9 +86,10 @@ void testOrganize(const fs::path& musicPath, const std::string& libPath) {
 	}
 }
 
+// TODO: Add a list at the end of the downloading showing if there were any errors downloading
 #ifndef NDEBUG
 int main() {
-	testOrganize("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
+	run("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
 #else
