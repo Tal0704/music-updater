@@ -26,6 +26,7 @@ public:
 	int trackNumber;
 	Status status;
     std::string name;
+	std::string lyrics;
 };
 
 bool operator==(const Song& left, const Song& right);

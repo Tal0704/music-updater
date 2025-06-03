@@ -28,7 +28,7 @@ void Album::download(const std::filesystem::path& path) {
 		throw std::runtime_error(std::format("No respone from: {}", imageURL));
 	}
 
-	std::ofstream image(path.string() + "/temp.jpg");
+	std::ofstream image(path.string() + "/temp.png");
 	image << res.value();
 
 	for(auto& song: songs) {
@@ -36,7 +36,7 @@ void Album::download(const std::filesystem::path& path) {
 		song->download(path);
 	}
 	std::cout << "\n";
-	fs::remove(path.string() + "/temp.jpg");
+	fs::remove(path.string() + "/temp.png");
 }
 
 std::string getSearchTerm(const Album& album)
@@ -74,7 +74,16 @@ float precentAccurate(const std::string& left, const std::string& right) {
 	return calcPercent(totalAccurate, i);
 }
 
-void Album::populateMetadata() {
+void populateSongsMetadata(const std::vector<std::unique_ptr<Song>>& songs, const std::string& apiKey) {
+	for(auto& song: songs) {
+		auto lyrics = getLyrics(song->album->artist, song->name, apiKey).value_or(""); 
+		song->lyrics = getLyrics(song->album->artist, song->name, apiKey).value_or("");
+		std::cout << song->name << " lyrics: " << song->lyrics << std::endl;
+	}
+}
+
+void Album::populateMetadata(const std::string& apiKey) {
+	populateSongsMetadata(songs, apiKey);
 	constexpr auto rootUrl = "https://musicbrainz.org/ws/2/";
 #ifndef NDEBUG
 	std::cout << std::format("{}release/?query=artist:{}%20AND%20release:{}&fmt=json", rootUrl, convertToUri(artist.c_str()), convertToUri(name.c_str())) << std::endl;

@@ -21,6 +21,9 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	uint cleanLibraries = 0;
 	uint total = 0;
 
+	std::ifstream api("api.env");
+	nlohmann::json apiKeys = nlohmann::json::parse(api);
+
 	for(auto& [albumName, album]: library) {
 		total++;
 		if(album->songs.size() == 0) {
@@ -28,7 +31,7 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 			continue;
 		}
 		try {
-			album->populateMetadata();
+			album->populateMetadata(apiKeys["happi"]);
 		}
 		catch (const std::exception& e) {
 			std::cout << e.what() << std::endl;
@@ -67,9 +70,7 @@ void testLyrics() {
 // TODO: Add a list at the end of the downloading showing if there were any errors downloading
 #ifndef NDEBUG
 int main() {
-	testLyrics();
-	return 0;
-	run("/home/tal/Music/temp", "/home/tal/Documents/notes/music/musicTemp.md");
+	run("/home/tal/Music/tempM", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
 #else

@@ -17,7 +17,7 @@ The library should look like this:
 ### Principle
 The program loads all the files from the download directory and all the albums from the library file and compares the two, if it finds a downloaded file that doesn't exist in the library it will ask to delete it, if it finds a song in the library that is not downloaded it will [download](####Download) it,
 #### Download
-The program will download the link to the album cover in to the download directory as temp.jpg, it will then download all the songs of the album one by one as temp.mp3 and then using [FFmpeg](https://github.com/FFmpeg/FFmpeg) it will create an mp3 flie with the name of the song, it will have the thumbnail you provided next to the album name and all the metadata (year, Artist and correct name of the album) of the song as it got from [musicbrainz](https://musicbrainz.org/). 
+The program will download the link to the album cover in to the download directory as temp.png, it will then download all the songs of the album one by one as temp.mp3 and then using [FFmpeg](https://github.com/FFmpeg/FFmpeg) it will create an mp3 flie with the name of the song, it will have the thumbnail you provided next to the album name and all the metadata (year, Artist and correct name of the album) of the song as it got from [musicbrainz](https://musicbrainz.org/). 
 
 ## Dependencies
 [curl](https://github.com/curl/curl)  

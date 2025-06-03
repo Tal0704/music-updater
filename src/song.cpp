@@ -26,14 +26,15 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	std::string songName = androidify(song.name);
 
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
-	ffmpeg += path + "/temp.jpg\" ";
+	ffmpeg += path + "/temp.png\" ";
 	ffmpeg += "-map 0:a -map 1:v -c copy -disposition:v:0 attached_pic ";
 	ffmpeg += "-metadata album=\"" + song.album->name + "\" ";
 	ffmpeg += "-metadata date=\"" + song.album->year + "\" ";
 	ffmpeg += "-metadata artist=\"" + song.album->artist + "\" ";
 	ffmpeg += "-metadata track=\"" + std::to_string(song.trackNumber) + "\" ";
 	ffmpeg += "-metadata genre=\"" + song.album->genre + "\" ";
-	ffmpeg += "-metadata title=\"" + song.name +"\" ";
+	ffmpeg += "-metadata title=\"" + song.name + "\" ";
+	ffmpeg += "-metadata lyrics=\"" + song.lyrics + "\" ";
 	ffmpeg += " -loglevel quiet \"";
 	ffmpeg += path + "/" + song.album->artist + " - " + songName + ".mp3\" ";
 	return ffmpeg;
