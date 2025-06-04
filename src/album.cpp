@@ -23,6 +23,7 @@ Album::Album(const std::string& name)
 }
 
 void Album::download(const std::filesystem::path& path) {
+	std::cout << "Downloading " << name << std::endl;
 	auto res = httpsGet(imageURL);
 	if(!res.has_value()) {
 		throw std::runtime_error(std::format("No respone from: {}", imageURL));

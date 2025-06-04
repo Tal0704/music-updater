@@ -29,10 +29,10 @@ CXXFLAGS = -std=c++20
 WARNINGS = -Wall -Wpedantic -Wextra -Wno-unused-parameter
 
 # Linker flags
-LDFLAGS = 
+LDFLAGS = -Llibs/sfml/lib
 
 # Libraries to link
-LDLIBS = -l curl -l avformat -l avcodec -l avutil
+LDLIBS = -l curl -l avformat -l avcodec -l avutil -lsfml-graphics -lsfml-window -lsfml-system
 
 # Target OS detection
 ifeq ($(OS),Windows_NT) # OS is a preexisting environment variable on Windows
