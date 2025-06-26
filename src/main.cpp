@@ -1,16 +1,16 @@
 #include "https.hpp"
-#include <helpers.hpp>
-#include <exec.hpp>
-#include <song.hpp>
-#include <fstream>
-#include <json.hpp>
-#include <iostream>
 #include <album.hpp>
+#include <exec.hpp>
+#include <fstream>
+#include <helpers.hpp>
+#include <iostream>
+#include <json.hpp>
+#include <song.hpp>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-void run(const fs::path& musicPath, const std::string& libPath) {
+void run(const fs::path &musicPath, const std::string &libPath) {
 	std::ifstream libFile(libPath);
 	auto downloaded = getDownloaded(musicPath);
 	auto library = getLibrary(libFile);
@@ -21,35 +21,26 @@ void run(const fs::path& musicPath, const std::string& libPath) {
 	uint cleanLibraries = 0;
 	uint total = 0;
 
-	std::ifstream api("api.env");
-	nlohmann::json apiKeys = nlohmann::json::parse(api);
-
-	for(auto& [albumName, album]: library) {
+	for (auto &[albumName, album] : library) {
 		total++;
-		if(album->songs.size() == 0) {
+		if (album->songs.size() == 0) {
 			cleanLibraries++;
 			continue;
-		}
-		try {
-			album->populateMetadata(apiKeys["happi"]);
-		}
-		catch (const std::exception& e) {
-			std::cout << e.what() << std::endl;
 		}
 		album->download(musicPath);
 	}
 
-	if(cleanLibraries == total) {
+	if (cleanLibraries == total) {
 		std::cout << "No songs to download! :D\n";
 	}
 }
 
-typedef std::unordered_map<std::string, Album::Ptr> libType ;
+typedef std::unordered_map<std::string, Album::Ptr> libType;
 
-std::ostream& operator<< (std::ostream& stream, const libType& lib) {
-	for(auto& [albumName, album]: lib) {
+std::ostream &operator<<(std::ostream &stream, const libType &lib) {
+	for (auto &[albumName, album] : lib) {
 		stream << albumName << std::endl;
-		for (auto& song: album->songs) {
+		for (auto &song : album->songs) {
 			stream << song->name << " | " << song->status << std::endl;
 		}
 		stream << std::endl;
@@ -66,17 +57,19 @@ void testLyrics() {
 	std::cout << res.value_or("Error") << std::endl;
 }
 
-
-// TODO: Add a list at the end of the downloading showing if there were any errors downloading
+// TODO: Add a list at the end of the downloading showing if there were any
+// errors downloading
 #ifndef NDEBUG
 int main() {
-	run("/home/tal/Music/tempM", "/home/tal/Documents/notes/music/musicTemp.md");
+	run("/home/tal/Music/M", "/home/tal/Documents/notes/music/musicTemp.md");
 	return 0;
 }
 #else
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 	if (argc != 3) {
-		std::cout << "Usage: " << argv[0] << " {Path to music folder} {Path to music library(.md file)}\n";
+		std::cout
+		    << "Usage: " << argv[0]
+		    << " {Path to music folder} {Path to music library(.md file)}\n";
 		return 1;
 	}
 	run(argv[1], argv[2]);

@@ -1,18 +1,17 @@
-#include <song.hpp>
-#include <iostream>
 #include <album.hpp>
 #include <exec.hpp>
-#include <string>
-#include <helpers.hpp>
 #include <format>
+#include <helpers.hpp>
+#include <iostream>
+#include <song.hpp>
+#include <string>
 
 namespace fs = std::filesystem;
 
-Song::Song(const std::string& name, Album::Ptr album, Status status)
-	:album(album), status(status), name(name)
-{ }
+Song::Song(const std::string &name, Album::Ptr album, Status status)
+    : album(album), status(status), name(name) {}
 
-std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
+std::string yt_dlpCommand(const std::string &URL, const std::string &path) {
 	std::string yt_dlp("yt-dlp -x --audio-format mp3 \"");
 	yt_dlp += URL;
 	yt_dlp += "\" -P ";
@@ -21,7 +20,7 @@ std::string yt_dlpCommand(const std::string& URL, const std::string& path) {
 	return yt_dlp;
 }
 
-std::string ffmpegCommand(const std::string& path, const Song& song) {
+std::string ffmpegCommand(const std::string &path, const Song &song) {
 	std::string ffmpeg("ffmpeg -y -i \"");
 	std::string songName = androidify(song.name);
 
@@ -35,39 +34,42 @@ std::string ffmpegCommand(const std::string& path, const Song& song) {
 	ffmpeg += "-metadata genre=\"" + song.album->genre + "\" ";
 	ffmpeg += "-metadata title=\"" + song.name + "\" ";
 	ffmpeg += "-metadata lyrics=\"" + song.lyrics + "\" ";
+	ffmpeg += "-metadata comment=\"" + song.URL + "\" ";
 	ffmpeg += " -loglevel quiet \"";
 	ffmpeg += path + "/" + song.album->artist + " - " + songName + ".mp3\" ";
 	return ffmpeg;
 }
 
-void Song::download(const fs::path& path) {
-	exec(std::format("yt-dlp -x --audio-format mp3 \"{}\" -P {} -o temp -q --cookies-from-browser firefox -N 20", URL, path.c_str()));
+void Song::download(const fs::path &path) {
+	exec(std::format("yt-dlp -x --audio-format mp3 \"{}\" -P {} -o temp -q "
+	                 "--cookies-from-browser firefox -N 20",
+	                 URL, path.c_str()));
 	exec(ffmpegCommand(path, *this));
 	fs::remove(path.string() + "/temp.mp3");
 }
 
-std::ostream& operator << (std::ostream& stream, const Song::Status& status) {
+std::ostream &operator<<(std::ostream &stream, const Song::Status &status) {
 	using Status = Song::Status;
 	switch (status) {
-		case Status::InBoth:
-			stream << "In Both";
-			break;
-		case Status::Downloaded:
-			stream << "Downloaded";
-			break;
-		case Status::Library:
-			stream << "Library";
-			break;
-		default:
-			break;
+	case Status::InBoth:
+		stream << "In Both";
+		break;
+	case Status::Downloaded:
+		stream << "Downloaded";
+		break;
+	case Status::Library:
+		stream << "Library";
+		break;
+	default:
+		break;
 	}
-	if(status == Status::InBoth) {
+	if (status == Status::InBoth) {
 	}
 	return stream;
 }
 
-bool operator==(const Song& left, const Song& right) {
+bool operator==(const Song &left, const Song &right) {
 	return (left.name == right.name) &&
-		 (left.album->name == right.album->name) &&
-		 (left.album->artist == right.album->artist);
+	       (left.album->name == right.album->name) &&
+	       (left.album->artist == right.album->artist);
 }
