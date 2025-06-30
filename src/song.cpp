@@ -1,10 +1,10 @@
 #include <album.hpp>
 #include <exec.hpp>
 #include <format>
-#include <helpers.hpp>
 #include <iostream>
 #include <song.hpp>
 #include <string>
+#include <utils.hpp>
 
 namespace fs = std::filesystem;
 
@@ -59,6 +59,9 @@ std::ostream &operator<<(std::ostream &stream, const Song::Status &status) {
 		break;
 	case Status::Library:
 		stream << "Library";
+		break;
+	case Status::DifferentUrl:
+		stream << "DifferentUrl";
 		break;
 	default:
 		break;

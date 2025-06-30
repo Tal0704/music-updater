@@ -3,13 +3,13 @@
 #include <fileMetadata.hpp>
 #include <filesystem>
 #include <format>
-#include <helpers.hpp>
 #include <iostream>
 #include <json.hpp>
 #include <memory>
 #include <song.hpp>
 #include <string>
 #include <unordered_map>
+#include <utils.hpp>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;

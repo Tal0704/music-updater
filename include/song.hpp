@@ -7,7 +7,7 @@
 
 struct Album;
 
-struct Song {
+class Song {
   public:
 	typedef std::unique_ptr<Song> Ptr;
 
@@ -23,13 +23,20 @@ struct Song {
 
 	void download(const std::filesystem::path &path);
 
+	std::shared_ptr<Album> getAlbum() const;
+	std::string getURL() const;
+	std::string getAlternateUrl() const;
+	std::string getName() const;
+	int getTrackNumber() const;
+	Status getStatus() const;
+
+  private:
 	std::shared_ptr<Album> album;
 	std::string URL;
 	std::string alternateUrl;
 	int trackNumber;
 	Status status;
 	std::string name;
-	std::string lyrics;
 };
 
 bool operator==(const Song &left, const Song &right);
