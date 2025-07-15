@@ -22,6 +22,6 @@ FfmpegCommnnd::FfmpegCommnnd(Song &song, const std::string &path)
 	mCommand += "-metadata title=\"" + mSong.getName() + "\" ";
 	mCommand += "-metadata comment=\"" + mSong.getURL() + "\" ";
 	mCommand += " -loglevel quiet \"";
-	mCommand += path + "/" + mSong.getAlbum()->artist + " - " +
-	            androidify(song.getName()) + ".mp3\" ";
+	mCommand += path + "/" + mSong.getAlbum()->artist + " - " + song.toFile() +
+	            ".mp3\" ";
 }
