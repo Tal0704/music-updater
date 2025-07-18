@@ -153,17 +153,41 @@ void collectMissing(
     std::function<void(const Song::Ptr &, const Song::Ptr &)> pred =
         [](const Song::Ptr &, const Song::Ptr &) {}) {
 
-	for (auto &song : source) {
-		auto found =
-		    std::find_if(target.begin(), target.end(), [&](auto &targetSong) {
-			    return song->toFile() == targetSong->getName();
-		    });
-		if (found == target.end()) {
-			destination.emplace_back(song);
-		} else {
-			pred(song, *found);
+	for (auto &sourceAlbum : source.mAlbums) {
+		for (auto &sourceSong : sourceAlbum.second->songs) {
+			auto a = []() {
+
+			};
+			Album::ContainerType::iterator found;
+			for (auto &targetAlbum : target.mAlbums) {
+				for (auto it = targetAlbum.second->songs.begin();
+				     it != targetAlbum.second->songs.end(); ++it) {
+					auto &targetSong = *it;
+					if (sourceSong->toFile() == targetSong->getName()) {
+						found = it;
+						break;
+					}
+				}
+			}
+
+			if (found == target.end()) {
+				destination.emplace_back(song);
+			} else {
+				pred(song, *found);
+			}
 		}
 	}
+	// for (auto &song : source) {
+	// 	auto found =
+	// 	    std::find_if(target.begin(), target.end(), [&](auto &targetSong)
+	// { 		    return song->toFile() == targetSong->getName();
+	// 	    });
+	// 	if (found == target.end()) {
+	// 		destination.emplace_back(song);
+	// 	} else {
+	// 		pred(song, *found);
+	// 	}
+	// }
 }
 
 // TODO: create library class and foreach
@@ -181,7 +205,8 @@ void Program::organizeSongs() {
 	// 		auto found =
 	// 		    std::find_if(mDownloaded.begin(), mDownloaded.end(),
 	// 		                 [&](auto &downAlbum) -> bool {
-	// 			                 return downAlbum.second->name == libAlbumName;
+	// 			                 return downAlbum.second->name ==
+	// libAlbumName;
 	// 		                 });
 
 	// 		if (found != mDownloaded.end()) {
@@ -207,19 +232,20 @@ void Program::organizeSongs() {
 	// 					}
 	// 				}
 
-	// 				// If song was not found in library, push to songsToDelete
-	// 				if (!isFound) {
-	// 					auto startOfName =
-	// 					    downSong->getName().find_first_of('-') + 2;
-	// 					auto size = downSong->getName().size();
-	// 					auto name = downSong->getName().substr(
-	// 					    startOfName + 2,
-	// 					    size - startOfName - 4); // - 4 is to remove .mp3
+	// 				// If song was not found in library, push to
+	// songsToDelete 				if (!isFound) { 					auto
+	// startOfName =
+	// downSong->getName().find_first_of('-') + 2; 					auto
+	// size = downSong->getName().size(); 					auto name =
+	// downSong->getName().substr( 					    startOfName + 2,
+	// size - startOfName - 4);
+	// // - 4 is to remove .mp3
 
 	// 					auto song =
-	// 					    std::make_shared<Song>(name, downSong->getAlbum());
-	// 					song->setStatus(Song::Downloaded);
-	// 					mSongsTodelete.push_back(song);
+	// 					    std::make_shared<Song>(name,
+	// downSong->getAlbum());
+	// song->setStatus(Song::Downloaded);
+	// mSongsTodelete.push_back(song);
 
 	// 					mLibrary[song->getAlbum()->name].songs.push_back(song);
 	// 				}

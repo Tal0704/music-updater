@@ -9,6 +9,7 @@ Library::iterator Library::begin() {
 
 const Library::iterator Library::end() {
 	AlbumsType::iterator albumIt = mAlbums.begin();
+	std::cout << &*mAlbums.begin() << std::endl;
 	Album::ContainerType::iterator it = albumIt->second->songs.begin();
 	while (albumIt != mAlbums.end()) {
 		++it;
