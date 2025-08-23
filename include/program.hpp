@@ -1,6 +1,7 @@
 #pragma once
 #include <album.hpp>
 #include <filesystem>
+#include <list>
 #include <song.hpp>
 #include <string>
 #include <unordered_map>
@@ -28,7 +29,7 @@ class Program {
 	std::unordered_map<std::string, Album::Ptr> mLibrary;
 	std::unordered_map<std::string, Album::Ptr> mDownloaded;
 
-	std::vector<Song::Ptr> mSongsToDownload;
-	std::vector<Song::Ptr> mSongsTodelete;
-	std::vector<Song::Ptr> mUrlToChange;
+	std::list<Song::Ptr> mSongsToDownload;
+	std::list<Song::Ptr> mSongsTodelete;
+	std::list<Song::Ptr> mUrlToChange;
 };

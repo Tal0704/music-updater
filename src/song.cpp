@@ -122,5 +122,5 @@ std::string androidify(const std::string &string) {
 std::string Song::toFile() const {
 	std::string name = androidify(mName);
 	std::string album = androidify(mAlbum->name);
-	return std::format("{} - {}.mp3", album, name);
+	return std::format("{} - {}.mp3", mAlbum->artist, name);
 }

@@ -10,7 +10,13 @@ using json = nlohmann::json;
 
 void Program::run() {
 	loadLibrary();
+	loadDownloaded();
+	// for (auto &album : mDownloaded) {
+	// 	for (auto &song : album.second->songs)
+	// 		std::cout << *song << "\n";
+	// }
 	organizeSongs();
+	std::cout << "Songs to delete:\n";
 	for (auto &song : mSongsTodelete) {
 		std::cout << *song << "\n";
 	}
@@ -29,6 +35,7 @@ std::optional<std::string> getArtist(const std::string &line);
 bool sureDifferentUrl(const Song &song, const std::string &originalUrl);
 
 void Program::loadLibrary() {
+	std::cout << "Loading library...\n";
 	std::string line;
 	std::string artist;
 
@@ -65,7 +72,7 @@ void Program::loadLibrary() {
 
 		int i = 1;
 		while (line != "") {
-			if (!std::getline(mLibraryFile, line)) {
+			if (!std::getline(mLibraryFile, line) || line.empty()) {
 				break;
 			}
 
@@ -78,14 +85,15 @@ void Program::loadLibrary() {
 			Song::Ptr song = std::make_unique<Song>(
 			    songName.value_or(""), album, Song::Status::Library);
 			if (auto URL = getLink(line)) {
-				song->setURL(URL.value_or(""));
-			} else {
-				std::cerr << std::format(
-				                 "{} - {} Has no link, skipping over it",
-				                 album->name, song->getName())
-				          << "\n";
-				i++;
-				continue;
+				if (URL->empty()) {
+					std::cerr
+					    << std::format("{} - {} Has no link, skipping over it",
+					                   album->name, song->getName())
+					    << "\n";
+					i++;
+					continue;
+				}
+				song->setURL(URL.value());
 			}
 
 			if (song->getName().length() > 0) {
@@ -100,9 +108,11 @@ void Program::loadLibrary() {
 		}
 		mLibrary[album->name] = std::move(album);
 	}
+	std::cout << "Finished loading library...\n";
 }
 
 void Program::loadDownloaded() {
+	std::cout << "Loading downloaded songs...\n";
 	for (const auto &pathIt : fs::directory_iterator(mMusicPath)) {
 		if (!pathIt.is_regular_file()) {
 			continue;
@@ -119,20 +129,20 @@ void Program::loadDownloaded() {
 		auto name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
 		auto albumName = metadata.read("album");
 		auto artistName = metadata.read("artist");
-		auto songUrl = metadata.read("comment");
+		// auto songUrl = metadata.read("");
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song =
 		    std::make_unique<Song>(name, album, Song::Status::Downloaded);
-		song->setURL(songUrl);
+		// song->setURL(songUrl);
 		album->artist = artistName;
 
-		// TODO: Check if not make null reference
 		// mDownloaded[album->name] = std::move(album);
 		if (mDownloaded[albumName].get() == nullptr) {
 			mDownloaded[albumName] = std::make_shared<Album>(albumName);
 		}
 		mDownloaded[albumName]->songs.push_back(std::move(song));
 	}
+	std::cout << "Finished loading downloaded songs...\n";
 }
 
 bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
@@ -153,8 +163,8 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 //         [](const Song::Ptr &, const Song::Ptr &) {}) {
 // 	for (auto &song : source) {
 // 		auto found =
-// 		    std::find_if(target.begin(), target.end(), [&](auto &targetSong) {
-// 			    return song->toFile() == targetSong->getName();
+// 		    std::find_if(target.begin(), target.end(), [&](auto &targetSong)
+// { 			    return song->toFile() == targetSong->getName();
 // 		    });
 // 		if (found == target.end()) {
 // 			destination.emplace_back(song);
@@ -166,68 +176,7 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 
 // TODO: create library class and foreach
 void Program::organizeSongs() {
-	for (auto &album : mLibrary) {
-		auto found =
-		    std::find_if(mDownloaded.begin(), mDownloaded.end(),
-		                 [&](auto &downAlbum) -> bool {
-			                 return downAlbum.second->name == album.first;
-		                 });
-
-		if (found != mDownloaded.end()) {
-			auto downloadedAlbum = found->second;
-			for (auto &libSong : album.second->songs) {
-				auto foundSong = std::find_if(
-				    downloadedAlbum->songs.begin(),
-				    downloadedAlbum->songs.end(),
-				    [&libSong](Song::Ptr song) -> bool {
-					    return song->toFile() == libSong->getName();
-				    });
-				if (foundSong == downloadedAlbum->songs.end()) {
-					mSongsTodelete.push_back(libSong);
-				}
-			}
-
-			// for (auto &downSong : found->second->songs) {
-			// 	bool isFound = false;
-			// 	for (auto &libSong : libAlbum->songs) {
-			// 		auto startOfName =
-			// downSong->getName().find_first_of('-') + 2; // + 2 to
-			// accommodate for hyphon and
-			// 		                      // space after it
-			// 		auto size = downSong->getName().size();
-			// 		// TODO: check if downSongName is ok
-			// 		auto downSongName = downSong->getName().substr(
-			// 		    startOfName + 2, size - startOfName);
-
-			// 		if (libSong->getName() == downSongName) {
-			// 			libSong->setStatus(Song::Status::InBoth);
-			// 			isFound = true;
-			// 		}
-			// 		if (libSong->getURL() != downSong->getURL()) {
-			// 			libSong->setAlternateUrl(downSong->getURL());
-			// 			mUrlToChange.push_back(libSong);
-			// 		}
-			// 	}
-
-			// 	// If song was not found in library, push to songsToDelete
-			// 	if (!isFound) {
-			// 		auto startOfName =
-			// 		    downSong->getName().find_first_of('-') + 2;
-			// 		auto size = downSong->getName().size();
-			// 		auto name = downSong->getName().substr(
-			// 		    startOfName + 2,
-			// 		    size - startOfName - 4); // - 4 is to remove .mp3
-
-			// 		auto song =
-			// 		    std::make_shared<Song>(name, downSong->getAlbum());
-			// 		song->setStatus(Song::Downloaded);
-			// 		mSongsTodelete.push_back(song);
-
-			// 		mLibrary[song->getAlbum()->name].songs.push_back(song);
-			// 	}
-			// }
-		}
-	}
+	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
 }
 
 void Program::changeUrls() {
@@ -322,6 +271,7 @@ std::optional<std::string> getThumbnail(const std::string &line) {
 std::optional<std::string> getLink(const std::string &line) {
 	if (line.length() == 0 || !line.starts_with('['))
 		return {};
+
 	int i = 1;
 	while (line[i] != ']' && uint(i) < line.length())
 		i++;
