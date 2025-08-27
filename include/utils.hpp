@@ -1,12 +1,12 @@
 #pragma once
 #include <album.hpp>
-#include <functional>
 #include <list>
 #include <optional>
 #include <song.hpp>
 #include <unordered_map>
 
-void confirmUserInput(std::function<void(void)> callback);
+// Sends the user message and returns if the answer is 'y' or "Y"
+bool confirmUserInput(const std::string &message = "");
 
 // Collects every song that needs to be deleted
 std::list<Song::Ptr>

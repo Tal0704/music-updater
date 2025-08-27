@@ -164,11 +164,11 @@ void Program::changeUrls() {
 		          << std::format("Are you sure you want to change \nOriginal: "
 		                         "{} \nnew: {}",
 		                         song->getURL(), song->getAlternateUrl());
-		confirmUserInput([&]() {
+		if (confirmUserInput()) {
 			song->setURL(song->getAlternateUrl());
 			mSongsToDownload.emplace_back(std::move(song));
 			fs::remove(mMusicPath / song->toFile());
-		});
+		}
 	}
 }
 
@@ -184,10 +184,10 @@ void Program::deleteUnwantedSongs() {
 	}
 	std::cout << std::endl;
 
-	confirmUserInput([&]() {
+	if (confirmUserInput()) {
 		for (auto &song : mSongsTodelete) {
 			std::cout << "Deleteing: " << mMusicPath / song->toFile() << "\n";
 			fs::remove(mMusicPath / song->toFile());
 		}
-	});
+	}
 }

@@ -1,17 +1,14 @@
 #include <algorithm>
-#include <functional>
 #include <iostream>
 #include <utils.hpp>
 
-void confirmUserInput(std::function<void(void)> callback) {
-	std::cout << "y/N\n";
+bool confirmUserInput(const std::string &message) {
+	std::cout << message << "\ny/N\n";
 
 	std::string answer;
 	std::getline(std::cin, answer);
 
-	if (answer == "y" || answer == "Y") {
-		callback();
-	}
+	return (answer == "y" || answer == "Y");
 }
 
 // Collects every song that needs to be deleted
