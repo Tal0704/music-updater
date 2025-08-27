@@ -11,26 +11,22 @@ using json = nlohmann::json;
 void Program::run() {
 	loadLibrary();
 	loadDownloaded();
-	// for (auto &album : mDownloaded) {
-	// 	for (auto &song : album.second->songs)
-	// 		std::cout << *song << "\n";
-	// }
 	organizeSongs();
+
+	downloadNeededSongs();
+	deleteUnwantedSongs();
+
 	std::cout << "Songs to delete:\n";
 	for (auto &song : mSongsTodelete) {
 		std::cout << *song << "\n";
 	}
 }
 
+void Program::downloadNeededSongs() {}
+
 Program::Program(const std::filesystem::path &musicPath,
                  const std::string &library)
     : mMusicPath(musicPath), mLibraryFile(library) {}
-
-std::optional<std::string> getName(const std::string &line);
-std::optional<std::string> getThumbnail(const std::string &line);
-std::optional<std::string> getLink(const std::string &line);
-std::optional<std::string> getAlbum(const std::string &line);
-std::optional<std::string> getArtist(const std::string &line);
 
 bool sureDifferentUrl(const Song &song, const std::string &originalUrl);
 
@@ -157,23 +153,6 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 	return (answer == "y" || answer == "Y");
 }
 
-// void collectMissing(
-//     Library &source, Library &target, std::vector<Song::Ptr> destination,
-//     std::function<void(const Song::Ptr &, const Song::Ptr &)> pred =
-//         [](const Song::Ptr &, const Song::Ptr &) {}) {
-// 	for (auto &song : source) {
-// 		auto found =
-// 		    std::find_if(target.begin(), target.end(), [&](auto &targetSong)
-// { 			    return song->toFile() == targetSong->getName();
-// 		    });
-// 		if (found == target.end()) {
-// 			destination.emplace_back(song);
-// 		} else {
-// 			pred(song, *found);
-// 		}
-// 	}
-// }
-
 // TODO: create library class and foreach
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
@@ -211,92 +190,4 @@ void Program::deleteUnwantedSongs() {
 			fs::remove(mMusicPath / song->toFile());
 		}
 	});
-}
-
-// void Program::cleanLibrary() {
-// 	for (auto &album : mLibrary) {
-// 		std::erase_if(album.songs, [](Song::Ptr &song) -> bool {
-// 			return song->getStatus() == Song::Status::InBoth;
-// 		});
-// 	}
-
-// 	// pushing downloaded songs and urlToChange
-// 	size_t downloaded = 0;
-// 	for (auto &[albumName, album] : mLibrary) {
-// 		for (auto &song : album->songs) {
-// 			if (song->getStatus() == Song::Downloaded)
-// 				mSongsTodelete.push_back(song);
-// 			else if (song->getStatus() == Song::DifferentUrl)
-// 				mUrlToChange.push_back(song);
-// 			else if (song->getStatus() == Song::Library)
-// 				mSongsToDownload.push_back(song);
-// 		}
-// 	}
-
-// 	changeUrls();
-
-// 	deleteUnwantedSongs();
-
-// 	for (auto &album : mLibrary) {
-// 		std::erase_if(album.second->songs, [](Song::Ptr &song) -> bool {
-// 			return song->getStatus() == Song::Status::Downloaded;
-// 		});
-// 	}
-// }
-
-std::optional<std::string> getName(const std::string &line) {
-	if (line.length() == 0 || !line.starts_with('['))
-		return {};
-	int i = 1;
-	while (line[i] != ']' && uint(i) < line.length())
-		i++;
-	return std::string(line.begin() + 1, line.begin() + i);
-}
-
-std::optional<std::string> getThumbnail(const std::string &line) {
-	if (line.length() == 0 || !line.starts_with("## ["))
-		return {};
-	int i = 1;
-	while (line[i] != ']' && uint(i) < line.length())
-		i++;
-	while (line[i] != '(' && uint(i) < line.length())
-		i++;
-	int j = i;
-	while (line[j] != ')' && uint(i) < line.length())
-		j++;
-
-	return std::string(line.begin() + i + 1, line.begin() + j);
-}
-
-std::optional<std::string> getLink(const std::string &line) {
-	if (line.length() == 0 || !line.starts_with('['))
-		return {};
-
-	int i = 1;
-	while (line[i] != ']' && uint(i) < line.length())
-		i++;
-	while (line[i] != '(' && uint(i) < line.length())
-		i++;
-	int j = i;
-	while (line[j] != ')' && uint(i) < line.length())
-		j++;
-
-	return std::string(line.begin() + i + 1, line.begin() + j);
-}
-
-std::optional<std::string> getAlbum(const std::string &line) {
-	if (line.length() == 0 || !line.starts_with("## "))
-		return {};
-
-	int i = 4;
-	while (line[i] != ']' && uint(i) < line.length())
-		i++;
-	return std::string(line.begin() + 4, line.begin() + i);
-}
-
-std::optional<std::string> getArtist(const std::string &line) {
-	if (line.length() == 0 || !line.starts_with("# "))
-		return {};
-
-	return line.substr(2, line.size() - 1);
 }

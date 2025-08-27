@@ -20,7 +20,7 @@ class Program {
 
 	void changeUrls();
 	void deleteUnwantedSongs();
-
+	void downloadNeededSongs();
 	void download();
 
 	std::filesystem::path mMusicPath;
