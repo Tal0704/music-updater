@@ -1,3 +1,4 @@
+#include <colors.hpp>
 #include <format>
 #include <iostream>
 #include <json.hpp>
@@ -12,17 +13,11 @@ void Program::run() {
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
+	std::cout << std::endl;
 
-	downloadNeededSongs();
 	deleteUnwantedSongs();
-
-	std::cout << "Songs to delete:\n";
-	for (auto &song : mSongsTodelete) {
-		std::cout << *song << "\n";
-	}
+	download();
 }
-
-void Program::downloadNeededSongs() {}
 
 Program::Program(const std::filesystem::path &musicPath,
                  const std::string &library)
@@ -104,7 +99,8 @@ void Program::loadLibrary() {
 		}
 		mLibrary[album->name] = std::move(album);
 	}
-	std::cout << "Finished loading library...\n";
+	std::cout << Colors::green << "Finished loading library!\n"
+	          << Colors::reset;
 }
 
 void Program::loadDownloaded() {
@@ -138,7 +134,8 @@ void Program::loadDownloaded() {
 		}
 		mDownloaded[albumName]->songs.push_back(std::move(song));
 	}
-	std::cout << "Finished loading downloaded songs...\n";
+	std::cout << Colors::green << "Finished loading downloaded songs!\n"
+	          << Colors::reset;
 }
 
 bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
@@ -156,6 +153,7 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 // TODO: create library class and foreach
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
+	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
 }
 
 void Program::changeUrls() {
@@ -166,7 +164,7 @@ void Program::changeUrls() {
 		                         song->getURL(), song->getAlternateUrl());
 		if (confirmUserInput()) {
 			song->setURL(song->getAlternateUrl());
-			mSongsToDownload.emplace_back(std::move(song));
+			// mAlbumsToDownload.emplace_back(song->getAlbum());
 			fs::remove(mMusicPath / song->toFile());
 		}
 	}
@@ -174,20 +172,35 @@ void Program::changeUrls() {
 
 void Program::deleteUnwantedSongs() {
 	if (mSongsTodelete.empty()) {
-		std::cout << "No songs to delete! :D\n";
+		std::cout << Colors::green << "No songs to delete! :D\n"
+		          << Colors::reset;
 		return;
 	}
 
 	std::cout << "Are you sure you want to delete: \n";
 	for (auto &song : mSongsTodelete) {
-		std::cout << song << "\n";
+		std::cout << *song << "\n";
 	}
-	std::cout << std::endl;
 
 	if (confirmUserInput()) {
 		for (auto &song : mSongsTodelete) {
-			std::cout << "Deleteing: " << mMusicPath / song->toFile() << "\n";
-			fs::remove(mMusicPath / song->toFile());
+			auto file = mMusicPath / song->getName();
+			std::cout << "Deleteing: " << file << "\n";
+			fs::remove(file);
 		}
 	}
+}
+
+void Program::download() {
+	if (mAlbumsToDownload.size() == 0) {
+		std::cout << Colors::green << "No songs to download!" << Colors::reset
+		          << std::endl;
+		return;
+	}
+
+	for (auto &[albumName, album] : mAlbumsToDownload) {
+		album->download(mMusicPath);
+	}
+	std::cout << Colors::green << "Finished downloading all the songs!"
+	          << Colors::reset << "\n";
 }

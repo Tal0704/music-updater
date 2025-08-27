@@ -2,6 +2,7 @@
 #include <album.hpp>
 #include <filesystem>
 #include <list>
+#include <map>
 #include <song.hpp>
 #include <string>
 #include <unordered_map>
@@ -20,7 +21,6 @@ class Program {
 
 	void changeUrls();
 	void deleteUnwantedSongs();
-	void downloadNeededSongs();
 	void download();
 
 	std::filesystem::path mMusicPath;
@@ -29,7 +29,7 @@ class Program {
 	std::unordered_map<std::string, Album::Ptr> mLibrary;
 	std::unordered_map<std::string, Album::Ptr> mDownloaded;
 
-	std::list<Song::Ptr> mSongsToDownload;
+	std::map<std::string, Album::Ptr> mAlbumsToDownload;
 	std::list<Song::Ptr> mSongsTodelete;
 	std::list<Song::Ptr> mUrlToChange;
 };

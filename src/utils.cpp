@@ -3,7 +3,9 @@
 #include <utils.hpp>
 
 bool confirmUserInput(const std::string &message) {
-	std::cout << message << "\ny/N\n";
+	if (!message.empty())
+		std::cout << message << "\n";
+	std::cout << "y/N\n";
 
 	std::string answer;
 	std::getline(std::cin, answer);
@@ -33,26 +35,51 @@ collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
 	return list;
 }
 
-// Collects every song that needs to be deleted
-std::list<Song::Ptr> collectToDownload(
+std::list<Song::Ptr> collectSongsToDownload(
     const std::unordered_map<std::string, Album::Ptr> &library,
-    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
+    std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
-	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
-		const auto &libraryAlbum = library.at(downloadAlbumName);
-		auto &libSongs = libraryAlbum->songs;
-		for (auto &downloadedSong : downloadAlbum->songs) {
-			auto found = std::find_if(libSongs.begin(), libSongs.end(),
-			                          [&](const Song::Ptr &libSong) {
-				                          return (libSong->toFile() ==
-				                                  downloadedSong->getName());
-			                          });
-			if (found == libSongs.end()) {
-				list.push_back(downloadedSong);
+
+	for (auto &[libraryAlbumName, libraryAlbum] : library) {
+		if (downloaded[libraryAlbum->name].get() == nullptr) {
+			for (auto &librarySong : libraryAlbum->songs) {
+				std::cout << librarySong->getAlbum()->artist << "\n";
+				list.push_back(librarySong);
+			}
+			continue;
+		}
+		const auto &downloadedAlbum = downloaded.at(libraryAlbumName);
+		auto &downloadedSongs = downloadedAlbum->songs;
+		for (auto &librarySong : libraryAlbum->songs) {
+			auto found = std::find_if(
+			    downloadedSongs.begin(), downloadedSongs.end(),
+			    [&](const Song::Ptr &downloadedSong) {
+				    return librarySong->toFile() == downloadedSong->getName();
+			    });
+			if (found == downloadedSongs.end()) {
+				list.push_back(librarySong);
 			}
 		}
 	}
 	return list;
+}
+
+// Collects every song that needs to be deleted
+std::map<std::string, Album::Ptr>
+collectToDownload(const std::unordered_map<std::string, Album::Ptr> &library,
+                  std::unordered_map<std::string, Album::Ptr> &downloaded) {
+	std::map<std::string, Album::Ptr> map;
+	auto songs = collectSongsToDownload(library, downloaded);
+
+	for (auto &song : songs) {
+		if (map[song->getAlbum()->name].get() == nullptr) {
+			map[song->getAlbum()->name] =
+			    std::make_shared<Album>(song->getAlbum()->name);
+			map[song->getAlbum()->name]->imageURL = song->getAlbum()->imageURL;
+		}
+		map[song->getAlbum()->name]->songs.push_back(song);
+	}
+	return map;
 }
 
 // Getters

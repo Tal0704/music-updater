@@ -21,7 +21,7 @@ class Song {
 	Song(const std::string &name, std::shared_ptr<Album> album,
 	     Status status = Status::InBoth);
 
-	void download(const std::filesystem::path &path);
+	void download(const std::filesystem::path &downloadPath);
 
 	std::shared_ptr<Album> getAlbum() const;
 	std::string getURL() const;

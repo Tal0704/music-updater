@@ -22,7 +22,7 @@ std::string yt_dlpCommand(const std::string &URL, const std::string &path) {
 
 std::string ffmpegCommand(const std::string &path, const Song &song) {
 	std::string ffmpeg("ffmpeg -y -i \"");
-	std::string songName = song.toFile();
+	std::string songName = song.getName();
 
 	ffmpeg += path + "/" + "temp.mp3\" -i \"";
 	ffmpeg += path + "/temp.png\" ";

@@ -50,8 +50,8 @@ void testLyrics() {
 // errors downloading
 // #ifndef NDEBUG
 int main() {
-	Program program("/home/tal/Music/",
-	                "/home/tal/Documents/notes/music/music.md");
+	Program program("/home/tal/Music/M",
+	                "/home/tal/Documents/notes/music/musicTemp.md");
 	program.run();
 	return 0;
 }
