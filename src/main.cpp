@@ -48,22 +48,23 @@ void testLyrics() {
 
 // TODO: Add a list at the end of the downloading showing if there were any
 // errors downloading
-// #ifndef NDEBUG
+#ifndef NDEBUG
 int main() {
-	Program program("/home/tal/Music/M",
-	                "/home/tal/Documents/notes/music/musicTemp.md");
+	Program program("/home/tal/Music",
+	                "/home/tal/Documents/notes/music/music.md");
 	program.run();
 	return 0;
 }
-// #else
-// int main(int argc, char **argv) {
-// 	if (argc != 3) {
-// 		std::cout
-// 		    << "Usage: " << argv[0]
-// 		    << " {Path to music folder} {Path to music library(.md file)}\n";
-// 		return 1;
-// 	}
-// 	run(argv[1], argv[2]);
-// 	return 0;
-// }
-// #endif
+#else
+int main(int argc, char **argv) {
+	if (argc != 3) {
+		std::cout
+		    << "Usage: " << argv[0]
+		    << " {Path to music folder} {Path to music library(.md file)}\n";
+		return 1;
+	}
+	Program program(argv[1], argv[2]);
+	program.run();
+	return 0;
+}
+#endif

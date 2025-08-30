@@ -159,6 +159,7 @@ std::ostream &operator<<(std::ostream &stream, const Album &album) {
 	stream << album.name;
 	return stream;
 }
+
 Album::Album(const Album &other)
     : songs(other.songs), name(other.name), year(other.year),
       imageURL(other.imageURL), artist(other.artist), genre(other.genre),

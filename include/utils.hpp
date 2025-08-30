@@ -11,7 +11,7 @@ bool confirmUserInput(const std::string &message = "");
 
 // Collects every song that needs to be deleted
 std::list<Song::Ptr>
-collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
+collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
                 const std::unordered_map<std::string, Album::Ptr> &downloaded);
 
 // Collects every song that needs to be downloaded

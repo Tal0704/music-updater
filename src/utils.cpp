@@ -15,10 +15,16 @@ bool confirmUserInput(const std::string &message) {
 
 // Collects every song that needs to be deleted
 std::list<Song::Ptr>
-collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
+collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
                 const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
 	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
+		if (library[downloadAlbumName].get() == nullptr) {
+			for (const auto &song : downloadAlbum->songs) {
+				list.push_back(song);
+			}
+			continue;
+		}
 		const auto &libraryAlbum = library.at(downloadAlbumName);
 		auto &libSongs = libraryAlbum->songs;
 		for (auto &downloadedSong : downloadAlbum->songs) {
@@ -41,7 +47,9 @@ std::list<Song::Ptr> collectSongsToDownload(
 	std::list<Song::Ptr> list;
 
 	for (auto &[libraryAlbumName, libraryAlbum] : library) {
-		if (downloaded[libraryAlbum->name].get() == nullptr) {
+		if (libraryAlbum.get() == nullptr)
+			continue;
+		if (downloaded[libraryAlbumName].get() == nullptr) {
 			for (auto &librarySong : libraryAlbum->songs) {
 				std::cout << librarySong->getAlbum()->artist << "\n";
 				list.push_back(librarySong);

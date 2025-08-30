@@ -27,6 +27,7 @@ struct Album {
 	std::string artist;
 	std::string genre;
 	uint totalSize;
+	friend std::ostream &operator<<(std::ostream &stream, const Album &album);
 };
 
 std::ostream &operator<<(std::ostream &stream, const Album &album);
