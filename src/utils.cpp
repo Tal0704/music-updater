@@ -51,7 +51,6 @@ std::list<Song::Ptr> collectSongsToDownload(
 			continue;
 		if (downloaded[libraryAlbumName].get() == nullptr) {
 			for (auto &librarySong : libraryAlbum->songs) {
-				std::cout << librarySong->getAlbum()->artist << "\n";
 				list.push_back(librarySong);
 			}
 			continue;
