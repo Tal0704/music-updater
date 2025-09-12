@@ -1,3 +1,6 @@
 [submodule "libs/clipp"]
 	path = libs/clipp
 	url = https://github.com/muellan/clipp.git
+[submodule "libs/argparse"]
+	path = libs/argparse
+	url = https://github.com/p-ranav/argparse

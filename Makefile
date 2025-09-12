@@ -18,7 +18,7 @@ SRCS := $(sort $(shell find $(SRC_DIR) -name '*.cpp'))
 
 # Includes
 INCLUDE_DIR = include
-INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann -Ilibs/utfcpp/source
+INCLUDES := -I$(INCLUDE_DIR) -Ilibs/json/single_include/nlohmann -Ilibs/argparse/include
 
 # C preprocessor settings
 CPPFLAGS = $(INCLUDES) -MMD -MP
@@ -29,7 +29,7 @@ CXXFLAGS = -std=c++20
 WARNINGS = -Wall -Wpedantic -Wextra -Wno-unused-parameter
 
 # Linker flags
-LDFLAGS = -Llibs/sfml/lib
+LDFLAGS = 
 
 # Libraries to link
 LDLIBS = -l curl -l avformat -l avcodec -l avutil -lsfml-graphics -lsfml-window -lsfml-system

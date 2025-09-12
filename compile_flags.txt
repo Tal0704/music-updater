@@ -4,6 +4,7 @@ c++
 
 -Iinclude
 -Ilibs/json/single_include/nlohmann
+-Ilibs/argparse/include
 
 -lcurl 
 -lavformat
