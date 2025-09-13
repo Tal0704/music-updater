@@ -10,6 +10,7 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 void Program::run() {
+	clean();
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
@@ -17,11 +18,14 @@ void Program::run() {
 
 	deleteUnwantedSongs();
 	download();
+	clean();
 }
 
 Program::Program(const std::filesystem::path &musicPath,
                  const std::string &library)
     : mMusicPath(musicPath), mLibraryFile(library) {}
+
+Program::~Program() { clean(); }
 
 bool sureDifferentUrl(const Song &song, const std::string &originalUrl);
 
@@ -109,11 +113,6 @@ void Program::loadDownloaded() {
 		if (!pathIt.is_regular_file()) {
 			continue;
 		}
-		auto foundTemp = pathIt.path().string().find("temp");
-		if (foundTemp != std::string::npos) {
-			fs::remove(pathIt.path());
-			continue;
-		}
 
 		FileMetadata metadata(pathIt.path().c_str());
 		auto pathstr = pathIt.path().string();
@@ -150,7 +149,6 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 	return (answer == "y" || answer == "Y");
 }
 
-// TODO: create library class and foreach
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
 	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
@@ -203,4 +201,16 @@ void Program::download() {
 	}
 	std::cout << Colors::green << "Finished downloading all the songs!"
 	          << Colors::reset << "\n";
+}
+
+void Program::clean() {
+	for (const auto &pathIt : fs::directory_iterator(mMusicPath)) {
+		if (!pathIt.is_regular_file()) {
+			continue;
+		}
+		auto foundTemp = pathIt.path().string().find("temp");
+		if (foundTemp != std::string::npos) {
+			fs::remove(pathIt.path());
+		}
+	}
 }

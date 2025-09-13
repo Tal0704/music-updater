@@ -10,6 +10,7 @@
 class Program {
   public:
 	Program(const std::filesystem::path &musicPath, const std::string &library);
+	~Program();
 	void run();
 
   private:
@@ -22,6 +23,7 @@ class Program {
 	void changeUrls();
 	void deleteUnwantedSongs();
 	void download();
+	void clean();
 
 	std::filesystem::path mMusicPath;
 	std::ifstream mLibraryFile;
