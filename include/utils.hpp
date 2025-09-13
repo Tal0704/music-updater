@@ -24,3 +24,5 @@ std::optional<std::string> getThumbnail(const std::string &line);
 std::optional<std::string> getLink(const std::string &line);
 std::optional<std::string> getAlbum(const std::string &line);
 std::optional<std::string> getArtist(const std::string &line);
+
+std::string androidify(const std::string &string);

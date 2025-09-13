@@ -102,23 +102,6 @@ std::string Song::toString() const {
 	return std::format("{} - {}", mAlbum->artist, mName);
 }
 
-std::string androidify(const std::string &string) {
-	std::string ret = string;
-	for (auto &c : ret) {
-		switch (c) {
-		case '*':
-			c = '+';
-			break;
-		case '?':
-		case '/':
-			c = '_';
-			break;
-		default:;
-		}
-	}
-	return ret;
-}
-
 std::string Song::toFile() const {
 	std::string name = androidify(mName);
 	std::string album = androidify(mAlbum->name);

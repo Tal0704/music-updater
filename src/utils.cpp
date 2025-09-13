@@ -28,11 +28,12 @@ collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
 		const auto &libraryAlbum = library.at(downloadAlbumName);
 		auto &libSongs = libraryAlbum->songs;
 		for (auto &downloadedSong : downloadAlbum->songs) {
-			auto found = std::find_if(libSongs.begin(), libSongs.end(),
-			                          [&](const Song::Ptr &libSong) {
-				                          return (libSong->toFile() ==
-				                                  downloadedSong->getName());
-			                          });
+			auto found =
+			    std::find_if(libSongs.begin(), libSongs.end(),
+			                 [&](const Song::Ptr &libSong) {
+				                 return (libSong->toFile() ==
+				                         androidify(downloadedSong->getName()));
+			                 });
 			if (found == libSongs.end()) {
 				list.push_back(downloadedSong);
 			}
@@ -58,11 +59,12 @@ std::list<Song::Ptr> collectSongsToDownload(
 		const auto &downloadedAlbum = downloaded.at(libraryAlbumName);
 		auto &downloadedSongs = downloadedAlbum->songs;
 		for (auto &librarySong : libraryAlbum->songs) {
-			auto found = std::find_if(
-			    downloadedSongs.begin(), downloadedSongs.end(),
-			    [&](const Song::Ptr &downloadedSong) {
-				    return librarySong->toFile() == downloadedSong->getName();
-			    });
+			auto found =
+			    std::find_if(downloadedSongs.begin(), downloadedSongs.end(),
+			                 [&](const Song::Ptr &downloadedSong) {
+				                 return librarySong->toFile() ==
+				                        androidify(downloadedSong->getName());
+			                 });
 			if (found == downloadedSongs.end()) {
 				list.push_back(librarySong);
 			}
@@ -146,4 +148,21 @@ std::optional<std::string> getArtist(const std::string &line) {
 		return {};
 
 	return line.substr(2, line.size() - 1);
+}
+
+std::string androidify(const std::string &string) {
+	std::string ret = string;
+	for (auto &c : ret) {
+		switch (c) {
+		case '*':
+			c = '+';
+			break;
+		case '?':
+		case '/':
+			c = '_';
+			break;
+		default:;
+		}
+	}
+	return ret;
 }
