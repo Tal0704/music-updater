@@ -1,4 +1,4 @@
-# Youtube Downloaded
+# Spoopify
 Self explanatory name, just a program to download songs from youtube
 
 ## Usage
@@ -23,3 +23,9 @@ The program will download the link to the album cover in to the download directo
 [curl](https://github.com/curl/curl)  
 [FFmpeg](https://github.com/FFmpeg/FFmpeg)  
 [yt-dlp](https://github.com/yt-dlp/yt-dlp)  
+
+## Configuration
+You can create a config file in $XDG_CONFIG_HOME/spoopify/config.json
+
+### Options:
+apiKey: api key to use with youtube (needed only for adding playlists to library)
