@@ -1,15 +1,8 @@
-build/linux/release/main.o: src/main.cpp include/https.hpp \
- include/album.hpp include/exec.hpp \
- libs/json/single_include/nlohmann/json.hpp include/library.hpp \
- include/libraryIterator.hpp include/song.hpp include/fileMetadata.hpp \
- include/program.hpp include/utils.hpp
-include/https.hpp:
+build/linux/release/main.o: src/main.cpp \
+ libs/argparse/include/argparse/argparse.hpp include/program.hpp \
+ include/album.hpp include/song.hpp include/fileMetadata.hpp
+libs/argparse/include/argparse/argparse.hpp:
+include/program.hpp:
 include/album.hpp:
-include/exec.hpp:
-libs/json/single_include/nlohmann/json.hpp:
-include/library.hpp:
-include/libraryIterator.hpp:
 include/song.hpp:
 include/fileMetadata.hpp:
-include/program.hpp:
-include/utils.hpp:
