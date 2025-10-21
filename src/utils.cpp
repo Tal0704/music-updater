@@ -15,11 +15,12 @@ bool confirmUserInput(const std::string &message) {
 
 // Collects every song that needs to be deleted
 std::list<Song::Ptr>
-collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
+collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
                 const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
 	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
-		if (library[downloadAlbumName].get() == nullptr) {
+		auto downloadedCurrentLibAlbum = library.find(downloadAlbumName);
+		if (downloadedCurrentLibAlbum == nullptr) {
 			for (const auto &song : downloadAlbum->songs) {
 				list.push_back(song);
 			}
@@ -44,13 +45,14 @@ collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
 
 std::list<Song::Ptr> collectSongsToDownload(
     const std::unordered_map<std::string, Album::Ptr> &library,
-    std::unordered_map<std::string, Album::Ptr> &downloaded) {
+    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
 
 	for (auto &[libraryAlbumName, libraryAlbum] : library) {
 		if (libraryAlbum.get() == nullptr)
 			continue;
-		if (downloaded[libraryAlbumName].get() == nullptr) {
+		auto downloadedCurrentLibAlbum = downloaded.find(libraryAlbumName);
+		if (downloadedCurrentLibAlbum == nullptr) {
 			for (auto &librarySong : libraryAlbum->songs) {
 				list.push_back(librarySong);
 			}
@@ -74,9 +76,9 @@ std::list<Song::Ptr> collectSongsToDownload(
 }
 
 // Collects every song that needs to be deleted
-std::map<std::string, Album::Ptr>
-collectToDownload(const std::unordered_map<std::string, Album::Ptr> &library,
-                  std::unordered_map<std::string, Album::Ptr> &downloaded) {
+std::map<std::string, Album::Ptr> collectToDownload(
+    const std::unordered_map<std::string, Album::Ptr> &library,
+    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::map<std::string, Album::Ptr> map;
 	auto songs = collectSongsToDownload(library, downloaded);
 
