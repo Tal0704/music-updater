@@ -14,11 +14,21 @@ void Program::run() {
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
-	std::cout << std::endl;
+	// std::cout << "library\n";
+	// for (auto &[albumName, album] : mLibrary) {
+	// 	for (const auto &song : album->songs)
+	// 		std::cout << *song << "\n";
+	// }
 
-	deleteUnwantedSongs();
-	download();
-	clean();
+	// std::cout << "downloaded\n";
+	// for (auto &[albumName, album] : mDownloaded) {
+	// 	for (const auto &song : album->songs)
+	// 		std::cout << *song << "\n";
+	// }
+
+	for (const auto &song : mUrlToChange) {
+		std::cout << *song << "\n";
+	}
 }
 
 Program::Program(const std::filesystem::path &musicPath,
@@ -115,16 +125,15 @@ void Program::loadDownloaded() {
 		}
 
 		FileMetadata metadata(pathIt.path().c_str());
-		auto pathstr = pathIt.path().string();
-		auto lastSlash = pathstr.find_last_of('/');
-		auto name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
+		auto name = metadata.read("title");
 		auto albumName = metadata.read("album");
 		auto artistName = metadata.read("artist");
-		// auto songUrl = metadata.read("");
+		auto songUrl = metadata.read("url");
+		std::cout << songUrl << "\n";
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song =
 		    std::make_unique<Song>(name, album, Song::Status::Downloaded);
-		// song->setURL(songUrl);
+		song->setURL(songUrl);
 		album->artist = artistName;
 
 		// mDownloaded[album->name] = std::move(album);
@@ -152,7 +161,8 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
 	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
-}
+	mUrlToChange = collectUrls(mLibrary, mDownloaded);
+};
 
 void Program::changeUrls() {
 	for (auto &song : mUrlToChange) {

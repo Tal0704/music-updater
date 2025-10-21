@@ -15,16 +15,18 @@ bool confirmUserInput(const std::string &message) {
 
 // Collects every song that needs to be deleted
 std::list<Song::Ptr>
-collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
+collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
                 const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
 	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
-		if (library[downloadAlbumName].get() == nullptr) {
+		auto libraryAtCurrentDownloaded = library.find(downloadAlbumName);
+		if (libraryAtCurrentDownloaded == nullptr) {
 			for (const auto &song : downloadAlbum->songs) {
 				list.push_back(song);
 			}
 			continue;
 		}
+
 		const auto &libraryAlbum = library.at(downloadAlbumName);
 		auto &libSongs = libraryAlbum->songs;
 		for (auto &downloadedSong : downloadAlbum->songs) {
@@ -42,15 +44,46 @@ collectToDelete(std::unordered_map<std::string, Album::Ptr> &library,
 	return list;
 }
 
+std::vector<Song::Ptr>
+collectUrls(const std::unordered_map<std::string, Album::Ptr> &library,
+            const std::unordered_map<std::string, Album::Ptr> &downloaded) {
+	std::vector<Song::Ptr> list;
+	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
+		std::cout << library.at(downloadAlbumName) << "\n";
+		if (library.at(downloadAlbumName).get() != nullptr) {
+			for (const auto &song : downloadAlbum->songs) {
+				list.push_back(song);
+			}
+			continue;
+		}
+
+		const auto &libraryAlbum = library.at(downloadAlbumName);
+		const auto &libSongs = libraryAlbum->songs;
+		for (auto &downloadedSong : downloadAlbum->songs) {
+			auto found =
+			    std::find_if(libSongs.begin(), libSongs.end(),
+			                 [&](const Song::Ptr &libSong) {
+				                 return (libSong->getURL() !=
+				                         androidify(downloadedSong->getURL()));
+			                 });
+			if (found == libSongs.end()) {
+				list.push_back(downloadedSong);
+			}
+		}
+	}
+	return list;
+}
+
 std::list<Song::Ptr> collectSongsToDownload(
     const std::unordered_map<std::string, Album::Ptr> &library,
-    std::unordered_map<std::string, Album::Ptr> &downloaded) {
+    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::list<Song::Ptr> list;
 
 	for (auto &[libraryAlbumName, libraryAlbum] : library) {
 		if (libraryAlbum.get() == nullptr)
 			continue;
-		if (downloaded[libraryAlbumName].get() == nullptr) {
+		auto downloadedCurrentLibrary = downloaded.find(libraryAlbumName);
+		if (downloadedCurrentLibrary == nullptr) {
 			for (auto &librarySong : libraryAlbum->songs) {
 				list.push_back(librarySong);
 			}
@@ -74,10 +107,11 @@ std::list<Song::Ptr> collectSongsToDownload(
 }
 
 // Collects every song that needs to be deleted
-std::map<std::string, Album::Ptr>
-collectToDownload(const std::unordered_map<std::string, Album::Ptr> &library,
-                  std::unordered_map<std::string, Album::Ptr> &downloaded) {
+std::map<std::string, Album::Ptr> collectToDownload(
+    const std::unordered_map<std::string, Album::Ptr> &library,
+    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::map<std::string, Album::Ptr> map;
+
 	auto songs = collectSongsToDownload(library, downloaded);
 
 	for (auto &song : songs) {

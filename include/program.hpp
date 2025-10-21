@@ -33,5 +33,5 @@ class Program {
 
 	std::map<std::string, Album::Ptr> mAlbumsToDownload;
 	std::list<Song::Ptr> mSongsTodelete;
-	std::list<Song::Ptr> mUrlToChange;
+	std::vector<Song::Ptr> mUrlToChange;
 };

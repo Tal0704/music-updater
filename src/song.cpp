@@ -34,7 +34,7 @@ std::string ffmpegCommand(const std::string &path, const Song &song) {
 	    "-metadata track=\"" + std::to_string(song.getTrackNumber()) + "\" ";
 	ffmpeg += "-metadata genre=\"" + song.getAlbum()->genre + "\" ";
 	ffmpeg += "-metadata title=\"" + song.getName() + "\" ";
-	ffmpeg += "-metadata comment=\"" + song.getURL() + "\" ";
+	ffmpeg += "-metadata url=\"" + song.getURL() + "\" ";
 	ffmpeg += " -loglevel quiet \"";
 	ffmpeg +=
 	    path + "/" + song.getAlbum()->artist + " - " + songName + ".mp3\" ";
