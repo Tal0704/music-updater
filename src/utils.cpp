@@ -48,29 +48,25 @@ std::vector<Song::Ptr>
 collectUrls(const std::unordered_map<std::string, Album::Ptr> &library,
             const std::unordered_map<std::string, Album::Ptr> &downloaded) {
 	std::vector<Song::Ptr> list;
-	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
-		std::cout << library.at(downloadAlbumName) << "\n";
-		if (library.at(downloadAlbumName).get() != nullptr) {
-			for (const auto &song : downloadAlbum->songs) {
-				list.push_back(song);
-			}
-			continue;
-		}
-
-		const auto &libraryAlbum = library.at(downloadAlbumName);
-		const auto &libSongs = libraryAlbum->songs;
-		for (auto &downloadedSong : downloadAlbum->songs) {
-			auto found =
-			    std::find_if(libSongs.begin(), libSongs.end(),
-			                 [&](const Song::Ptr &libSong) {
-				                 return (libSong->getURL() !=
-				                         androidify(downloadedSong->getURL()));
-			                 });
-			if (found == libSongs.end()) {
-				list.push_back(downloadedSong);
+	for (const auto &[downloadedAlbumName, downloadedAlbum] : downloaded) {
+		auto libraryAlbum = library.find(downloadedAlbumName);
+		if (libraryAlbum != library.end()) {
+			for (const auto &libSong : libraryAlbum->second->songs) {
+				const auto &downloadedSongs = downloadedAlbum->songs;
+				auto downloadedSong = std::find_if(
+				    downloadedSongs.begin(), downloadedSongs.end(),
+				    [&](const Song::Ptr &downloadedSong) -> bool {
+					    return downloadedSong->getName() == libSong->getName();
+				    });
+				if (downloadedSong == downloadedSongs.end())
+					continue;
+				if (downloadedSong->get()->getURL() != libSong->getURL()) {
+					list.emplace_back(*downloadedSong);
+				}
 			}
 		}
 	}
+
 	return list;
 }
 

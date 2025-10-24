@@ -14,8 +14,9 @@ void Program::run() {
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
+	// // download();
 	// std::cout << "library\n";
-	// for (auto &[albumName, album] : mLibrary) {
+	// for (auto &[albumname, album] : mLibrary) {
 	// 	for (const auto &song : album->songs)
 	// 		std::cout << *song << "\n";
 	// }
@@ -25,6 +26,7 @@ void Program::run() {
 	// 	for (const auto &song : album->songs)
 	// 		std::cout << *song << "\n";
 	// }
+	std::cout << "to change" << "\n";
 
 	for (const auto &song : mUrlToChange) {
 		std::cout << *song << "\n";
@@ -129,7 +131,6 @@ void Program::loadDownloaded() {
 		auto albumName = metadata.read("album");
 		auto artistName = metadata.read("artist");
 		auto songUrl = metadata.read("url");
-		std::cout << songUrl << "\n";
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song =
 		    std::make_unique<Song>(name, album, Song::Status::Downloaded);
