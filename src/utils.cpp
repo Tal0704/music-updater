@@ -61,6 +61,7 @@ collectUrls(const std::unordered_map<std::string, Album::Ptr> &library,
 				if (downloadedSong == downloadedSongs.end())
 					continue;
 				if (downloadedSong->get()->getURL() != libSong->getURL()) {
+					downloadedSong->get()->setURL(libSong->getURL());
 					list.emplace_back(*downloadedSong);
 				}
 			}

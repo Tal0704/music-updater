@@ -29,7 +29,7 @@ void Program::run() {
 	std::cout << "to change" << "\n";
 
 	for (const auto &song : mUrlToChange) {
-		std::cout << *song << "\n";
+		std::cout << *song << " - " << song->getURL() << "\n";
 	}
 }
 
@@ -167,13 +167,10 @@ void Program::organizeSongs() {
 
 void Program::changeUrls() {
 	for (auto &song : mUrlToChange) {
-		std::cout << song
-		          << std::format("Are you sure you want to change \nOriginal: "
-		                         "{} \nnew: {}",
-		                         song->getURL(), song->getAlternateUrl());
+		std::cout << "Are you sure you want to change to new link for " << song
+		          << "\nNew link: " << song->getURL();
 		if (confirmUserInput()) {
-			song->setURL(song->getAlternateUrl());
-			// mAlbumsToDownload.emplace_back(song->getAlbum());
+			// TODO: Add song to mAlbumsToDownload
 			fs::remove(mMusicPath / song->toFile());
 		}
 	}

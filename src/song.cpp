@@ -84,14 +84,12 @@ bool Song::operator==(const Song &o) {
 
 std::shared_ptr<Album> Song::getAlbum() const { return mAlbum; }
 std::string Song::getURL() const { return mURL; }
-std::string Song::getAlternateUrl() const { return mAlternateUrl; }
 std::string Song::getName() const { return mName; }
 int Song::getTrackNumber() const { return mTrackNumber; };
 Song::Status Song::getStatus() const { return mStatus; }
 
 void Song::setAlbum(const std::shared_ptr<Album> &album) { mAlbum = album; }
 void Song::setURL(const std::string &URL) { mURL = URL; }
-void Song::setAlternateUrl(const std::string &URL) { mAlternateUrl = URL; }
 void Song::setName(const std::string &name) { mName = name; }
 void Song::setTrackNumber(const int &trackNumber) {
 	mTrackNumber = trackNumber;
