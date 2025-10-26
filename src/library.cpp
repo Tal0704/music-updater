@@ -2,22 +2,17 @@
 #include <library.hpp>
 #include <memory>
 
-Library::iterator Library::begin() {
-	std::cout << &*mAlbums.end() << std::endl;
-	return LibraryIterator(mAlbums, {});
+Iterator Library::begin() {
+	return Iterator(mAlbums, mAlbums.begin()->second->songs.begin());
 }
 
-const Library::iterator Library::end() {
-	AlbumsType::iterator albumIt = mAlbums.begin();
-	std::cout << &*mAlbums.begin() << std::endl;
-	Album::ContainerType::iterator it = albumIt->second->songs.begin();
-	while (albumIt != mAlbums.end()) {
-		++it;
-		if (it == albumIt->second->songs.end()) {
-			++albumIt;
-		}
-	}
-	return LibraryIterator(mAlbums, it);
+const Iterator Library::end() {
+	auto end = mAlbums.end();
+	end--;
+	auto songEnd = end->second->songs.end();
+	songEnd--;
+	return Iterator(mAlbums, end->second->songs.end());
+	// return Iterator(mAlbums, songEnd);
 }
 
 std::ostream &operator<<(std::ostream &stream, const Library &lib) {
@@ -39,4 +34,18 @@ void Library::removeSong(const Song *song) {
 	auto &songs = mAlbums[song->getAlbum()->name]->songs;
 	std::erase_if(songs,
 	              [&song](auto &other) -> bool { return song == other.get(); });
+}
+
+void Library::addSong(const Song &song, const Album &album) {
+	if (mAlbums[album.name].get() == nullptr) {
+		mAlbums[album.name] = std::make_shared<Album>(album.name);
+		Song::Ptr s = std::make_shared<Song>(song);
+		mAlbums[album.name]->songs.emplace_back(s);
+		return;
+	}
+	mAlbums[album.name]->songs.emplace_back(std::make_shared<Song>(song));
+}
+
+void Library::addSong(const Song &song) {
+	Library::addSong(song, *song.getAlbum());
 }

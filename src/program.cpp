@@ -28,8 +28,8 @@ void Program::run() {
 	// }
 	std::cout << "to change" << "\n";
 
-	for (const auto &song : mUrlToChange) {
-		std::cout << *song << " - " << song->getURL() << "\n";
+	for (const auto &album : mAlbumsToDownload) {
+		std::cout << album.first << "\n";
 	}
 }
 

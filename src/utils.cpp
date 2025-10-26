@@ -80,21 +80,24 @@ std::list<Song::Ptr> collectSongsToDownload(
 		if (libraryAlbum.get() == nullptr)
 			continue;
 		auto downloadedCurrentLibrary = downloaded.find(libraryAlbumName);
-		if (downloadedCurrentLibrary == nullptr) {
+		if (downloadedCurrentLibrary == downloaded.end()) {
 			for (auto &librarySong : libraryAlbum->songs) {
 				list.push_back(librarySong);
 			}
 			continue;
 		}
-		const auto &downloadedAlbum = downloaded.at(libraryAlbumName);
-		auto &downloadedSongs = downloadedAlbum->songs;
+
+		const auto &downloadedAlbum = downloaded.find(libraryAlbumName);
+		if (downloadedAlbum == downloaded.end())
+			continue;
+
+		auto &downloadedSongs = downloadedAlbum->second->songs;
 		for (auto &librarySong : libraryAlbum->songs) {
-			auto found =
-			    std::find_if(downloadedSongs.begin(), downloadedSongs.end(),
-			                 [&](const Song::Ptr &downloadedSong) {
-				                 return librarySong->toFile() ==
-				                        androidify(downloadedSong->getName());
-			                 });
+			auto found = std::find_if(
+			    downloadedSongs.begin(), downloadedSongs.end(),
+			    [&](const Song::Ptr &downloadedSong) {
+				    return librarySong->getName() == downloadedSong->getName();
+			    });
 			if (found == downloadedSongs.end()) {
 				list.push_back(librarySong);
 			}
