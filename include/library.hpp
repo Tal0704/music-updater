@@ -36,7 +36,7 @@ class Library {
   public:
 	typedef std::map<std::string, std::shared_ptr<Album>> AlbumsType;
 	Iterator begin();
-	const Iterator end();
+	Iterator end();
 
 	std::shared_ptr<Album> &operator[](const std::string &key);
 	void removeSong(const Song *song);

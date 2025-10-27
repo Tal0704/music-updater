@@ -1,21 +1,27 @@
 #include <argparse/argparse.hpp>
 #include <library.hpp>
 #include <program.hpp>
+#include <utils.hpp>
 
 #ifndef NDEBUG
 int main() {
 	Library lib;
+	Library download;
 	Album::Ptr album = std::make_shared<Album>("Master of puppets");
 	Song song("Orion", album);
 	lib.addSong(song, *album);
+	download.addSong(song, *album);
 	song.setName("Master");
 	lib.addSong(song, *album);
+	download.addSong(song, *album);
 	Album::Ptr a = std::make_shared<Album>("Meteora");
 	Song s("Don't Stay", a);
 	lib.addSong(s, *a);
 
-	for (auto it = lib.begin(); it != lib.end(); ++it) {
-		std::cout << **it << "\n";
+	auto deleted = collectToDownload(lib, download);
+
+	for (auto &song : deleted) {
+		std::cout << *song << "\n";
 	}
 
 	return 0;

@@ -6,7 +6,7 @@ Iterator Library::begin() {
 	return Iterator(mAlbums, mAlbums.begin()->second->songs.begin());
 }
 
-const Iterator Library::end() {
+Iterator Library::end() {
 	auto end = mAlbums.end();
 	end--;
 	auto songEnd = end->second->songs.end();

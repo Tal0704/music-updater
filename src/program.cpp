@@ -161,7 +161,7 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
-	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
+	// mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
 	mUrlToChange = collectUrls(mLibrary, mDownloaded);
 };
 
