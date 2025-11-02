@@ -3,10 +3,8 @@
 #include <filesystem>
 #include <library.hpp>
 #include <list>
-#include <map>
 #include <song.hpp>
 #include <string>
-// #include <unordered_map>
 
 class Program {
   public:
@@ -35,7 +33,7 @@ class Program {
 	Library mLibrary;
 	Library mDownloaded;
 
-	std::map<std::string, Album::Ptr> mAlbumsToDownload;
+	Library mAlbumsToDownload;
 	std::list<Song::Ptr> mSongsTodelete;
 	std::vector<Song::Ptr> mUrlToChange;
 };

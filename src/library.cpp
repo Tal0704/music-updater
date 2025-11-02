@@ -2,6 +2,8 @@
 #include <library.hpp>
 #include <memory>
 
+namespace fs = std::filesystem;
+
 Iterator Library::begin() {
 	return Iterator(mAlbums, mAlbums.begin()->second->songs.begin());
 }
@@ -48,4 +50,12 @@ void Library::addSong(const Song &song, const Album &album) {
 
 void Library::addSong(const Song &song) {
 	Library::addSong(song, *song.getAlbum());
+}
+
+bool Library::empty() { return mAlbums.empty(); }
+
+void Library::download(const fs::path &path) {
+	for (const auto &[albumName, album] : mAlbums) {
+		album->download(path);
+	}
 }

@@ -14,7 +14,6 @@ bool confirmUserInput(const std::string &message) {
 }
 
 // Collects every song that needs to be deleted
-// TODO: try to use lib iterator
 std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded) {
 	std::list<Song::Ptr> list;
 
@@ -55,7 +54,23 @@ std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded) {
 }
 
 std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded) {
-	// std::vector<Song::Ptr> list;
+	std::vector<Song::Ptr> vector;
+
+	// TODO: Check if this logic actually works
+	for (const auto &libSong : library) {
+		auto found = std::find_if(
+		    downloaded.begin(), downloaded.end(),
+		    [&](const Song::Ptr &downloadedSong) {
+			    return (libSong->getName() == downloadedSong->getName()) &&
+			           (libSong->getURL() != downloadedSong->getURL());
+		    });
+		if (found != downloaded.end()) {
+			vector.emplace_back(libSong);
+		}
+	}
+
+	return vector;
+
 	// for (const auto &downloadedAlbum : downloaded) {
 	// 	auto libraryAlbum = library.find(downloadedAlbumName);
 	// 	if (libraryAlbum != library.end()) {
@@ -75,12 +90,10 @@ std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded) {
 	// 		}
 	// 	}
 	// }
-
-	// return list;
 }
 
-std::list<Song::Ptr> collectToDownload(Library &library, Library &downloaded) {
-	std::list<Song::Ptr> list;
+Library collectToDownload(Library &library, Library &downloaded) {
+	Library lib;
 
 	for (const auto &libSong : library) {
 		auto found = std::find_if(downloaded.begin(), downloaded.end(),
@@ -89,11 +102,11 @@ std::list<Song::Ptr> collectToDownload(Library &library, Library &downloaded) {
 			                                 downloadedSong->getName();
 		                          });
 		if (found == downloaded.end()) {
-			list.emplace_back(libSong);
+			lib.addSong(*libSong);
 		}
 	}
 
-	return list;
+	return lib;
 	// for (auto &libraryAlbum : library) {
 	// 	if (libraryAlbum.get() == nullptr)
 	// 		continue;

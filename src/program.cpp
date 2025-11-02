@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 void Program::run() {
-	clean();
+	// clean();
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
@@ -28,8 +28,8 @@ void Program::run() {
 	// }
 	std::cout << "to change" << "\n";
 
-	for (const auto &album : mAlbumsToDownload) {
-		std::cout << album.first << "\n";
+	for (const auto &song : mUrlToChange) {
+		std::cout << song->getName() << " - " << song->getURL() << "\n";
 	}
 }
 
@@ -130,11 +130,17 @@ void Program::loadDownloaded() {
 		auto name = metadata.read("title");
 		auto albumName = metadata.read("album");
 		auto artistName = metadata.read("artist");
-		auto songUrl = metadata.read("url");
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song =
 		    std::make_unique<Song>(name, album, Song::Status::Downloaded);
-		song->setURL(songUrl);
+
+		try {
+			auto songUrl = metadata.read("url");
+			song->setURL(songUrl);
+		} catch (const char *c) {
+			std::cerr << "Couldn't find song url";
+		}
+
 		album->artist = artistName;
 
 		// mDownloaded[album->name] = std::move(album);
@@ -161,7 +167,7 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
-	// mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
+	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
 	mUrlToChange = collectUrls(mLibrary, mDownloaded);
 };
 
@@ -198,15 +204,13 @@ void Program::deleteUnwantedSongs() {
 }
 
 void Program::download() {
-	if (mAlbumsToDownload.size() == 0) {
+	if (mAlbumsToDownload.empty()) {
 		std::cout << Colors::green << "No songs to download!" << Colors::reset
 		          << std::endl;
 		return;
 	}
 
-	for (auto &[albumName, album] : mAlbumsToDownload) {
-		album->download(mMusicPath);
-	}
+	mAlbumsToDownload.download(mMusicPath);
 	std::cout << Colors::green << "Finished downloading all the songs!"
 	          << Colors::reset << "\n";
 }

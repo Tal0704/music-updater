@@ -156,7 +156,10 @@ void Album::populateMetadata() {
 }
 
 std::ostream &operator<<(std::ostream &stream, const Album &album) {
-	stream << album.name;
+	stream << album.name << "\n";
+	for (const auto &song : album.songs) {
+		stream << *song << "\n";
+	}
 	return stream;
 }
 

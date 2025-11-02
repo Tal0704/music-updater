@@ -1,6 +1,7 @@
 #pragma once
 #include <album.hpp>
 // #include <libraryIterator.hpp>
+#include <filesystem>
 #include <map>
 #include <optional>
 #include <song.hpp>
@@ -42,6 +43,8 @@ class Library {
 	void removeSong(const Song *song);
 	void addSong(const Song &song, const Album &album);
 	void addSong(const Song &song);
+	void download(const std::filesystem::path &path);
+	bool empty();
 
   private:
 	AlbumsType mAlbums;

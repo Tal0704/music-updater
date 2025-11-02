@@ -2,7 +2,6 @@
 #include <album.hpp>
 #include <library.hpp>
 #include <list>
-#include <map>
 #include <optional>
 #include <song.hpp>
 
@@ -14,7 +13,7 @@ std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded);
 
 std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded);
 // Collects every song that needs to be downloaded
-std::list<Song::Ptr> collectToDownload(Library &library, Library &downloaded);
+Library collectToDownload(Library &library, Library &downloaded);
 
 std::optional<std::string> getName(const std::string &line);
 std::optional<std::string> getThumbnail(const std::string &line);
