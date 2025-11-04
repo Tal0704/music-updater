@@ -15,21 +15,6 @@ void Program::run() {
 	loadDownloaded();
 	organizeSongs();
 	download();
-	std::cout << "library\n";
-	for (auto &album : mAlbumsToDownload) {
-		std::cout << album->getAlbum()->imageURL << "\n";
-	}
-
-	// std::cout << "downloaded\n";
-	// for (auto &[albumName, album] : mDownloaded) {
-	// 	for (const auto &song : album->songs)
-	// 		std::cout << *song << "\n";
-	// }
-	// std::cout << "to change" << "\n";
-
-	// for (const auto &song : mUrlToChange) {
-	// 	std::cout << song->getName() << " - " << song->getURL() << "\n";
-	// }
 }
 
 Program::Program(const std::filesystem::path &musicPath,
@@ -110,6 +95,9 @@ void Program::loadLibrary() {
 
 		album->totalSize = album->songs.size();
 		mLibrary.addAlbum(album);
+		for (auto &album : mLibrary.getAlbums()) {
+			std::cout << album.second->imageURL << "\n";
+		}
 	}
 	std::cout << Colors::green << "Finished loading library!\n"
 	          << Colors::reset;
@@ -139,7 +127,6 @@ void Program::loadDownloaded() {
 
 		album->artist = artistName;
 
-		// mDownloaded[album->name] = std::move(album);
 		if (mDownloaded[albumName].get() == nullptr) {
 			mDownloaded[albumName] = std::make_shared<Album>(albumName);
 		}
