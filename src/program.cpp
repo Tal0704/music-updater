@@ -10,27 +10,26 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 void Program::run() {
-	// clean();
+	clean();
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
-	// // download();
-	// std::cout << "library\n";
-	// for (auto &[albumname, album] : mLibrary) {
-	// 	for (const auto &song : album->songs)
-	// 		std::cout << *song << "\n";
-	// }
+	download();
+	std::cout << "library\n";
+	for (auto &album : mAlbumsToDownload) {
+		std::cout << album->getAlbum()->imageURL << "\n";
+	}
 
 	// std::cout << "downloaded\n";
 	// for (auto &[albumName, album] : mDownloaded) {
 	// 	for (const auto &song : album->songs)
 	// 		std::cout << *song << "\n";
 	// }
-	std::cout << "to change" << "\n";
+	// std::cout << "to change" << "\n";
 
-	for (const auto &song : mUrlToChange) {
-		std::cout << song->getName() << " - " << song->getURL() << "\n";
-	}
+	// for (const auto &song : mUrlToChange) {
+	// 	std::cout << song->getName() << " - " << song->getURL() << "\n";
+	// }
 }
 
 Program::Program(const std::filesystem::path &musicPath,
@@ -110,10 +109,7 @@ void Program::loadLibrary() {
 		}
 
 		album->totalSize = album->songs.size();
-		if (mLibrary[album->name].get() == nullptr) {
-			mLibrary[album->name] = std::make_shared<Album>(album->name);
-		}
-		mLibrary[album->name] = std::move(album);
+		mLibrary.addAlbum(album);
 	}
 	std::cout << Colors::green << "Finished loading library!\n"
 	          << Colors::reset;
@@ -166,9 +162,9 @@ bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
 }
 
 void Program::organizeSongs() {
-	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
+	// mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
 	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
-	mUrlToChange = collectUrls(mLibrary, mDownloaded);
+	// mUrlToChange = collectUrls(mLibrary, mDownloaded);
 };
 
 void Program::changeUrls() {

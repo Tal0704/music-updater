@@ -56,6 +56,17 @@ bool Library::empty() { return mAlbums.empty(); }
 
 void Library::download(const fs::path &path) {
 	for (const auto &[albumName, album] : mAlbums) {
+		std::cout << album->imageURL << "\n";
 		album->download(path);
 	}
 }
+
+void Library::addAlbum(const Album::Ptr &album) {
+	if (mAlbums[album->name].get() == nullptr) {
+		mAlbums[album->name] = std::make_shared<Album>(*album);
+	}
+	mAlbums[album->name] = album;
+	auto a = mAlbums[album->name]->imageURL;
+}
+
+const Library::AlbumsType &Library::getAlbums() const { return mAlbums; }
