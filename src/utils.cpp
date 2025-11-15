@@ -16,6 +16,9 @@ bool confirmUserInput(const std::string &message) {
 // Collects every song that needs to be deleted
 std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded) {
 	std::list<Song::Ptr> list;
+	if (downloaded.empty()) {
+		return list;
+	}
 
 	for (auto &downloadedSong : downloaded) {
 		auto found = std::find_if(library.begin(), library.end(),
@@ -32,6 +35,10 @@ std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded) {
 
 std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded) {
 	std::vector<Song::Ptr> vector;
+
+	if (library.empty()) {
+		return vector;
+	}
 
 	// TODO: Check if this logic actually works
 	for (const auto &libSong : library) {
@@ -51,6 +58,10 @@ std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded) {
 
 Library collectToDownload(Library &library, Library &downloaded) {
 	Library lib;
+
+	if (downloaded.empty()) {
+		return library;
+	}
 
 	for (const auto &libSong : library) {
 		auto found = std::find_if(downloaded.begin(), downloaded.end(),

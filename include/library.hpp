@@ -42,11 +42,11 @@ class Library {
 	std::shared_ptr<Album> &operator[](const std::string &key);
 	const AlbumsType &getAlbums() const;
 	void removeSong(const Song *song);
-	void addSong(const Song &song, const Album &album);
 	void addSong(const Song &song);
 	void addAlbum(const Album::Ptr &album);
 	void download(const std::filesystem::path &path);
-	bool empty();
+	size_t size() const;
+	bool empty() const;
 
   private:
 	AlbumsType mAlbums;

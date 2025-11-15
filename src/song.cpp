@@ -50,7 +50,7 @@ void Song::download(const fs::path &path) {
 }
 
 std::ostream &operator<<(std::ostream &stream, const Song &song) {
-	stream << *(song.getAlbum()) << " - " << song.getName();
+	stream << song.getAlbum()->name << " - " << song.getName();
 	return stream;
 }
 

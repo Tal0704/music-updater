@@ -5,28 +5,6 @@
 
 #ifndef NDEBUG
 int main() {
-	// Library lib;
-	// Library download;
-	// Album::Ptr album = std::make_shared<Album>("Master of puppets");
-	// Song song("Orion", album);
-	// song.setUrl("Orion");
-	// lib.addSong(song, *album);
-	// download.addSong(song, *album);
-	// song.setName("Master");
-	// lib.addSong(song, *album);
-	// download.addSong(song, *album);
-	// Album::Ptr a = std::make_shared<Album>("Meteora");
-	// Song s("Don't Stay", a);
-	// lib.addSong(s, *a);
-
-	// auto deleted = collectToDownload(lib, download);
-
-	// for (auto &song : deleted) {
-	// 	std::cout << *song << "\n";
-	// }
-
-	// return 0;
-
 	Program program("/home/tal/Music/M",
 	                "/home/tal/Documents/notes/music/musicTemp.md");
 	program.run();

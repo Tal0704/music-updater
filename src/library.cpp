@@ -38,25 +38,31 @@ void Library::removeSong(const Song *song) {
 	              [&song](auto &other) -> bool { return song == other.get(); });
 }
 
-void Library::addSong(const Song &song, const Album &album) {
-	if (mAlbums[album.name].get() == nullptr) {
-		mAlbums[album.name] = std::make_shared<Album>(album.name);
+void Library::addSong(const Song &song) {
+	if (mAlbums[song.getAlbum()->name].get() == nullptr) {
+		mAlbums[song.getAlbum()->name] =
+		    std::make_shared<Album>(*song.getAlbum());
 		Song::Ptr s = std::make_shared<Song>(song);
-		mAlbums[album.name]->songs.emplace_back(s);
+		mAlbums[song.getAlbum()->name]->songs.emplace_back(s);
 		return;
 	}
-	mAlbums[album.name]->songs.emplace_back(std::make_shared<Song>(song));
+	mAlbums[song.getAlbum()->name]->songs.emplace_back(
+	    std::make_shared<Song>(song));
 }
 
-void Library::addSong(const Song &song) {
-	Library::addSong(song, *song.getAlbum());
+size_t Library::size() const {
+	size_t sum = 0;
+
+	for (const auto &album : mAlbums) {
+		sum += mAlbums.size();
+	}
+	return sum;
 }
 
-bool Library::empty() { return mAlbums.empty(); }
+bool Library::empty() const { return mAlbums.empty(); }
 
 void Library::download(const fs::path &path) {
 	for (const auto &[albumName, album] : mAlbums) {
-		std::cout << album->imageURL << "\n";
 		album->download(path);
 	}
 }
