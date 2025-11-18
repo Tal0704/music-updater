@@ -34,7 +34,7 @@ std::string ffmpegCommand(const std::string &path, const Song &song) {
 	    "-metadata track=\"" + std::to_string(song.getTrackNumber()) + "\" ";
 	ffmpeg += "-metadata genre=\"" + song.getAlbum()->genre + "\" ";
 	ffmpeg += "-metadata title=\"" + song.getName() + "\" ";
-	ffmpeg += "-metadata comment=\"" + song.getURL() + "\" ";
+	ffmpeg += "-metadata url=\"" + song.getURL() + "\" ";
 	ffmpeg += " -loglevel quiet \"";
 	ffmpeg +=
 	    path + "/" + song.getAlbum()->artist + " - " + songName + ".mp3\" ";
@@ -50,7 +50,7 @@ void Song::download(const fs::path &path) {
 }
 
 std::ostream &operator<<(std::ostream &stream, const Song &song) {
-	stream << *(song.getAlbum()) << " - " << song.getName();
+	stream << song.getAlbum()->name << " - " << song.getName();
 	return stream;
 }
 
@@ -84,14 +84,12 @@ bool Song::operator==(const Song &o) {
 
 std::shared_ptr<Album> Song::getAlbum() const { return mAlbum; }
 std::string Song::getURL() const { return mURL; }
-std::string Song::getAlternateUrl() const { return mAlternateUrl; }
 std::string Song::getName() const { return mName; }
 int Song::getTrackNumber() const { return mTrackNumber; };
 Song::Status Song::getStatus() const { return mStatus; }
 
 void Song::setAlbum(const std::shared_ptr<Album> &album) { mAlbum = album; }
 void Song::setURL(const std::string &URL) { mURL = URL; }
-void Song::setAlternateUrl(const std::string &URL) { mAlternateUrl = URL; }
 void Song::setName(const std::string &name) { mName = name; }
 void Song::setTrackNumber(const int &trackNumber) {
 	mTrackNumber = trackNumber;

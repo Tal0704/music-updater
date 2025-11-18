@@ -25,14 +25,12 @@ class Song {
 
 	std::shared_ptr<Album> getAlbum() const;
 	std::string getURL() const;
-	std::string getAlternateUrl() const;
 	std::string getName() const;
 	int getTrackNumber() const;
 	Status getStatus() const;
 
 	void setAlbum(const std::shared_ptr<Album> &album);
 	void setURL(const std::string &URL);
-	void setAlternateUrl(const std::string &url);
 	void setName(const std::string &name);
 	void setTrackNumber(const int &trackNumber);
 	void setStatus(const Status &status);
@@ -45,7 +43,6 @@ class Song {
   private:
 	std::shared_ptr<Album> mAlbum;
 	std::string mURL;
-	std::string mAlternateUrl;
 	int mTrackNumber;
 	Status mStatus;
 	std::string mName;

@@ -27,12 +27,12 @@ Album::Album(Album &&other) {
 }
 
 void Album::operator=(const Album &other) {
-	songs = std::move(other.songs);
-	name = std::move(other.name);
-	year = std::move(other.year);
-	imageURL = std::move(other.imageURL);
-	artist = std::move(other.artist);
-	genre = std::move(other.genre);
+	songs = other.songs;
+	name = other.name;
+	year = other.year;
+	imageURL = other.imageURL;
+	artist = other.artist;
+	genre = other.genre;
 	totalSize = other.totalSize;
 }
 
@@ -156,7 +156,10 @@ void Album::populateMetadata() {
 }
 
 std::ostream &operator<<(std::ostream &stream, const Album &album) {
-	stream << album.name;
+	stream << album.name << "\n";
+	for (const auto &song : album.songs) {
+		stream << *song << "\n";
+	}
 	return stream;
 }
 

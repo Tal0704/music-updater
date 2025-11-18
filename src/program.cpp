@@ -14,11 +14,9 @@ void Program::run() {
 	loadLibrary();
 	loadDownloaded();
 	organizeSongs();
-	std::cout << std::endl;
-
 	deleteUnwantedSongs();
-	download();
-	clean();
+	changeUrls();
+	// download();
 }
 
 Program::Program(const std::filesystem::path &musicPath,
@@ -98,10 +96,7 @@ void Program::loadLibrary() {
 		}
 
 		album->totalSize = album->songs.size();
-		if (mLibrary[album->name].get() == nullptr) {
-			mLibrary[album->name] = std::make_shared<Album>(album->name);
-		}
-		mLibrary[album->name] = std::move(album);
+		mLibrary.addAlbum(album);
 	}
 	std::cout << Colors::green << "Finished loading library!\n"
 	          << Colors::reset;
@@ -115,19 +110,22 @@ void Program::loadDownloaded() {
 		}
 
 		FileMetadata metadata(pathIt.path().c_str());
-		auto pathstr = pathIt.path().string();
-		auto lastSlash = pathstr.find_last_of('/');
-		auto name = std::string(pathstr.begin() + lastSlash + 1, pathstr.end());
+		auto name = metadata.read("title");
 		auto albumName = metadata.read("album");
 		auto artistName = metadata.read("artist");
-		// auto songUrl = metadata.read("");
 		Album::Ptr album = std::make_unique<Album>(albumName);
 		Song::Ptr song =
 		    std::make_unique<Song>(name, album, Song::Status::Downloaded);
-		// song->setURL(songUrl);
+
+		try {
+			auto songUrl = metadata.read("url");
+			song->setURL(songUrl);
+		} catch (const char *c) {
+			std::cerr << "Couldn't find song url";
+		}
+
 		album->artist = artistName;
 
-		// mDownloaded[album->name] = std::move(album);
 		if (mDownloaded[albumName].get() == nullptr) {
 			mDownloaded[albumName] = std::make_shared<Album>(albumName);
 		}
@@ -137,33 +135,28 @@ void Program::loadDownloaded() {
 	          << Colors::reset;
 }
 
-bool sureDifferentUrl(const Song &song, const std::string &originalUrl) {
-	std::cout << song.getName()
-	          << ": are you sure you want to replace url?\noriginal: "
-	          << originalUrl << "\nnew     : " << song.getURL();
-	std::cout << "\ny/N\n";
-
-	std::string answer;
-	std::getline(std::cin, answer);
-
-	return (answer == "y" || answer == "Y");
-}
-
 void Program::organizeSongs() {
 	mSongsTodelete = collectToDelete(mLibrary, mDownloaded);
 	mAlbumsToDownload = collectToDownload(mLibrary, mDownloaded);
-}
+	mUrlToChange = collectUrls(mLibrary, mDownloaded);
+};
 
 void Program::changeUrls() {
+	if (mUrlToChange.empty()) {
+		return;
+	}
+
+	std::cout << "Are you sure you want to change URL?\n";
+
 	for (auto &song : mUrlToChange) {
-		std::cout << song
-		          << std::format("Are you sure you want to change \nOriginal: "
-		                         "{} \nnew: {}",
-		                         song->getURL(), song->getAlternateUrl());
-		if (confirmUserInput()) {
-			song->setURL(song->getAlternateUrl());
-			// mAlbumsToDownload.emplace_back(song->getAlbum());
-			fs::remove(mMusicPath / song->toFile());
+		std::cout << *song << " : " << song->getURL() << "\n";
+	}
+
+	if (confirmUserInput()) {
+		for (auto &song : mUrlToChange) {
+			std::cout << "Downloading new URL for: " << *song << "\n";
+			song->download(mMusicPath);
+			// fs::remove(mMusicPath / song->toFile());
 		}
 	}
 }
@@ -190,15 +183,13 @@ void Program::deleteUnwantedSongs() {
 }
 
 void Program::download() {
-	if (mAlbumsToDownload.size() == 0) {
+	if (mAlbumsToDownload.empty()) {
 		std::cout << Colors::green << "No songs to download!" << Colors::reset
 		          << std::endl;
 		return;
 	}
 
-	for (auto &[albumName, album] : mAlbumsToDownload) {
-		album->download(mMusicPath);
-	}
+	mAlbumsToDownload.download(mMusicPath);
 	std::cout << Colors::green << "Finished downloading all the songs!"
 	          << Colors::reset << "\n";
 }

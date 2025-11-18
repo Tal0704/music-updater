@@ -14,83 +14,67 @@ bool confirmUserInput(const std::string &message) {
 }
 
 // Collects every song that needs to be deleted
-std::list<Song::Ptr>
-collectToDelete(const std::unordered_map<std::string, Album::Ptr> &library,
-                const std::unordered_map<std::string, Album::Ptr> &downloaded) {
+std::list<Song::Ptr> collectToDelete(Library &library, Library &downloaded) {
 	std::list<Song::Ptr> list;
-	for (auto &[downloadAlbumName, downloadAlbum] : downloaded) {
-		auto downloadedCurrentLibAlbum = library.find(downloadAlbumName);
-		if (downloadedCurrentLibAlbum == nullptr) {
-			for (const auto &song : downloadAlbum->songs) {
-				list.push_back(song);
-			}
-			continue;
-		}
-		const auto &libraryAlbum = library.at(downloadAlbumName);
-		auto &libSongs = libraryAlbum->songs;
-		for (auto &downloadedSong : downloadAlbum->songs) {
-			auto found =
-			    std::find_if(libSongs.begin(), libSongs.end(),
-			                 [&](const Song::Ptr &libSong) {
-				                 return (libSong->toFile() ==
-				                         androidify(downloadedSong->getName()));
-			                 });
-			if (found == libSongs.end()) {
-				list.push_back(downloadedSong);
-			}
+	if (downloaded.empty()) {
+		return list;
+	}
+
+	for (auto &downloadedSong : downloaded) {
+		auto found = std::find_if(library.begin(), library.end(),
+		                          [&](const Song::Ptr &libSong) -> bool {
+			                          return downloadedSong->getName() ==
+			                                 libSong->getName();
+		                          });
+		if (found == library.end()) {
+			list.emplace_back(downloadedSong);
 		}
 	}
 	return list;
 }
 
-std::list<Song::Ptr> collectSongsToDownload(
-    const std::unordered_map<std::string, Album::Ptr> &library,
-    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
-	std::list<Song::Ptr> list;
+std::vector<Song::Ptr> collectUrls(Library &library, Library &downloaded) {
+	std::vector<Song::Ptr> vector;
 
-	for (auto &[libraryAlbumName, libraryAlbum] : library) {
-		if (libraryAlbum.get() == nullptr)
-			continue;
-		auto downloadedCurrentLibAlbum = downloaded.find(libraryAlbumName);
-		if (downloadedCurrentLibAlbum == nullptr) {
-			for (auto &librarySong : libraryAlbum->songs) {
-				list.push_back(librarySong);
-			}
-			continue;
-		}
-		const auto &downloadedAlbum = downloaded.at(libraryAlbumName);
-		auto &downloadedSongs = downloadedAlbum->songs;
-		for (auto &librarySong : libraryAlbum->songs) {
-			auto found =
-			    std::find_if(downloadedSongs.begin(), downloadedSongs.end(),
-			                 [&](const Song::Ptr &downloadedSong) {
-				                 return librarySong->toFile() ==
-				                        androidify(downloadedSong->getName());
-			                 });
-			if (found == downloadedSongs.end()) {
-				list.push_back(librarySong);
-			}
+	if (library.empty()) {
+		return vector;
+	}
+
+	// TODO: Check if this logic actually works
+	for (const auto &libSong : library) {
+		auto found = std::find_if(
+		    downloaded.begin(), downloaded.end(),
+		    [&](const Song::Ptr &downloadedSong) {
+			    return (libSong->getName() == downloadedSong->getName()) &&
+			           (libSong->getURL() != downloadedSong->getURL());
+		    });
+		if (found != downloaded.end()) {
+			vector.emplace_back(libSong);
 		}
 	}
-	return list;
+
+	return vector;
 }
 
-// Collects every song that needs to be deleted
-std::map<std::string, Album::Ptr> collectToDownload(
-    const std::unordered_map<std::string, Album::Ptr> &library,
-    const std::unordered_map<std::string, Album::Ptr> &downloaded) {
-	std::map<std::string, Album::Ptr> map;
-	auto songs = collectSongsToDownload(library, downloaded);
+Library collectToDownload(Library &library, Library &downloaded) {
+	Library lib;
 
-	for (auto &song : songs) {
-		if (map[song->getAlbum()->name].get() == nullptr) {
-			map[song->getAlbum()->name] =
-			    std::make_shared<Album>(song->getAlbum()->name);
-			map[song->getAlbum()->name]->imageURL = song->getAlbum()->imageURL;
-		}
-		map[song->getAlbum()->name]->songs.push_back(song);
+	if (downloaded.empty()) {
+		return library;
 	}
-	return map;
+
+	for (const auto &libSong : library) {
+		auto found = std::find_if(downloaded.begin(), downloaded.end(),
+		                          [&](const Song::Ptr &downloadedSong) {
+			                          return libSong->getName() ==
+			                                 downloadedSong->getName();
+		                          });
+		if (found == downloaded.end()) {
+			lib.addSong(*libSong);
+		}
+	}
+
+	return lib;
 }
 
 // Getters

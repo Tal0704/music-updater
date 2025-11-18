@@ -1,11 +1,10 @@
 #pragma once
 #include <album.hpp>
 #include <filesystem>
+#include <library.hpp>
 #include <list>
-#include <map>
 #include <song.hpp>
 #include <string>
-#include <unordered_map>
 
 class Program {
   public:
@@ -28,10 +27,13 @@ class Program {
 	std::filesystem::path mMusicPath;
 	std::ifstream mLibraryFile;
 
-	std::unordered_map<std::string, Album::Ptr> mLibrary;
-	std::unordered_map<std::string, Album::Ptr> mDownloaded;
+	// std::unordered_map<std::string, Album::Ptr> mLibrary;
+	// std::unordered_map<std::string, Album::Ptr> mDownloaded;
 
-	std::map<std::string, Album::Ptr> mAlbumsToDownload;
+	Library mLibrary;
+	Library mDownloaded;
+
+	Library mAlbumsToDownload;
 	std::list<Song::Ptr> mSongsTodelete;
-	std::list<Song::Ptr> mUrlToChange;
+	std::vector<Song::Ptr> mUrlToChange;
 };
